@@ -1,0 +1,182 @@
+.nav-giorno {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-content);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-giorno:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-2);
+  color: var(--accent-text);
+}
+
+.btn-oggi {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 14px;
+  background: var(--bg-content);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-oggi:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.btn-oggi:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.etichetta-giorno {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+/* colonne a larghezza fissa: il box del periodo compare nella terza
+   e non sposta più nome e stato */
+.col-dipendente {
+  width: 220px;
+}
+
+.col-stato {
+  width: 130px;
+}
+
+.col-periodo {
+  width: auto;
+}
+
+.stato-cella {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 34px;
+}
+
+/* certificato medico allegato alla malattia */
+.certificato-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.certificato-carica {
+  padding: 5px 11px;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.certificato-carica:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.certificato-link {
+  border: none;
+  background: #e3efe1;
+  color: #4f7a4a;
+  border-radius: 7px;
+  padding: 5px 11px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.certificato-elimina {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.certificato-elimina:hover {
+  color: #b0503b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .certificato-link {
+    background: #2a352a;
+    color: #9dc99a;
+  }
+}
+
+.periodo-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-2);
+}
+
+.periodo-testo {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+
+.periodo-box input[type='date'] {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  background: var(--bg-content);
+  outline: none;
+}
+
+.periodo-box button {
+  border: none;
+  border-radius: 7px;
+  padding: 5px 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.periodo-box button:hover {
+  background: var(--accent-text);
+}
+
+.periodo-box button.periodo-annulla {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.periodo-box button.periodo-annulla:hover {
+  background: var(--bg);
+  color: var(--text);
+}

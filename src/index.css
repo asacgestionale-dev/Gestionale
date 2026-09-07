@@ -1,0 +1,320 @@
+:root {
+  --bg: #f3f5f8;
+  --bg-content: #ffffff;
+  --bg-header: #ffffff;
+
+  --sidebar-bg: #1c2b3a;
+  --sidebar-bg-2: #16222e;
+  --sidebar-text: #b9c6d4;
+  --sidebar-text-muted: #7c8ea0;
+  --sidebar-active-bg: rgba(94, 156, 211, 0.16);
+  --sidebar-active-text: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.06);
+
+  --text: #4a5568;
+  --text-h: #1e2a38;
+  --text-muted: #8695a7;
+  --border: #e6eaf0;
+
+  --accent: #3f7cac;
+  --accent-2: #6fa8c9;
+  --accent-soft: #e8f1f8;
+  --accent-text: #2f6188;
+
+  --shadow-sm: 0 1px 2px rgba(30, 42, 56, 0.06);
+  --shadow-md: 0 4px 14px rgba(30, 42, 56, 0.08);
+  --shadow-lg: 0 12px 28px rgba(30, 42, 56, 0.12);
+
+  --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+  font: 15px/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12181f;
+    --bg-content: #1a222b;
+    --bg-header: #1a222b;
+
+    --sidebar-bg: #10161d;
+    --sidebar-bg-2: #0b1015;
+    --sidebar-text: #a9b8c8;
+    --sidebar-text-muted: #62748a;
+    --sidebar-active-bg: rgba(111, 168, 201, 0.16);
+    --sidebar-active-text: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.05);
+
+    --text: #b7c1cc;
+    --text-h: #eef2f6;
+    --text-muted: #7c8a99;
+    --border: #29323d;
+
+    --accent: #6fa8c9;
+    --accent-2: #8fbedb;
+    --accent-soft: #1c2b38;
+    --accent-text: #9cc7e2;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* ---- tema aziendale: nero e magenta, superfici bianche e spigoli vivi ---- */
+:root[data-tema='aziendale'] {
+  color-scheme: light;
+
+  --bg: #f2f2f2;
+  --bg-content: #ffffff;
+  --bg-header: #ffffff;
+
+  --sidebar-bg: #1a1a1a;
+  --sidebar-bg-2: #000000;
+  --sidebar-text: #d5d5d5;
+  --sidebar-text-muted: #8a8a8a;
+  --sidebar-active-bg: #e6007e;
+  --sidebar-active-text: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+
+  --text: #333333;
+  --text-h: #111111;
+  --text-muted: #767676;
+  --border: #d5d5d5;
+
+  --accent: #e6007e;
+  --accent-2: #ff4fa8;
+  --accent-soft: #fde6f2;
+  --accent-text: #c1006a;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.09);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* superfici squadrate e compatte, come nei gestionali da scrivania */
+:root[data-tema='aziendale'] .card,
+:root[data-tema='aziendale'] .stat-card,
+:root[data-tema='aziendale'] .task-tile,
+:root[data-tema='aziendale'] .job-form,
+:root[data-tema='aziendale'] .timeline-wrap,
+:root[data-tema='aziendale'] .squadra-card,
+:root[data-tema='aziendale'] .person-list,
+:root[data-tema='aziendale'] .job-list {
+  border-radius: 3px;
+}
+
+:root[data-tema='aziendale'] input,
+:root[data-tema='aziendale'] select,
+:root[data-tema='aziendale'] textarea,
+:root[data-tema='aziendale'] button,
+:root[data-tema='aziendale'] .vai-assegnazione,
+:root[data-tema='aziendale'] .btn-mappa {
+  border-radius: 2px;
+}
+
+:root[data-tema='aziendale'] .sidebar-link,
+:root[data-tema='aziendale'] .sidebar-gruppo-testa {
+  border-radius: 0;
+}
+
+:root[data-tema='aziendale'] .sidebar-logo,
+:root[data-tema='aziendale'] .topbar-avatar,
+:root[data-tema='aziendale'] .accesso-logo {
+  background: #e6007e;
+  border-radius: 3px;
+  box-shadow: none;
+}
+
+/* la voce attiva è una barra magenta piena, come nel menu di riferimento */
+:root[data-tema='aziendale'] .sidebar-link.active .sidebar-icon {
+  color: #fff;
+}
+
+:root[data-tema='aziendale'] .task-tile-icon-wrap {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+}
+
+:root[data-tema='aziendale'] .page-title,
+:root[data-tema='aziendale'] .dashboard-section-title,
+:root[data-tema='aziendale'] .job-list-label {
+  color: var(--accent-text);
+}
+
+:root[data-tema='aziendale'] .task-table th {
+  background: #fafafa;
+  color: var(--text-muted);
+}
+
+/* ---- tema elegante: grafite e oro, sempre scuro ---- */
+:root[data-tema='elegante'] {
+  color-scheme: dark;
+
+  --bg: #0e0f12;
+  --bg-content: #17191f;
+  --bg-header: #17191f;
+
+  --sidebar-bg: #08090b;
+  --sidebar-bg-2: #14161c;
+  --sidebar-text: #b7b2a6;
+  --sidebar-text-muted: #6f6a60;
+  --sidebar-active-bg: rgba(197, 160, 89, 0.16);
+  --sidebar-active-text: #e8d9b6;
+  --sidebar-border: rgba(197, 160, 89, 0.2);
+
+  --text: #c6c2b8;
+  --text-h: #f2ede1;
+  --text-muted: #85806f;
+  --border: #2a2c34;
+
+  --accent: #c5a059;
+  --accent-2: #e0c483;
+  --accent-soft: #241f16;
+  --accent-text: #e2c88c;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7);
+}
+
+/* dettagli dorati: filo di luce sulle superfici e titoli in oro */
+:root[data-tema='elegante'] .card,
+:root[data-tema='elegante'] .stat-card,
+:root[data-tema='elegante'] .task-tile,
+:root[data-tema='elegante'] .job-form {
+  border-color: #2f313a;
+  background-image: linear-gradient(180deg, rgba(197, 160, 89, 0.05), transparent 60%);
+}
+
+:root[data-tema='elegante'] .task-tile:hover {
+  border-color: var(--accent);
+}
+
+:root[data-tema='elegante'] .task-tile-icon-wrap {
+  background: linear-gradient(140deg, #2a2419, #1b1811);
+  color: var(--accent-2);
+  border: 1px solid rgba(197, 160, 89, 0.28);
+}
+
+:root[data-tema='elegante'] .dashboard-section-title,
+:root[data-tema='elegante'] .job-list-label,
+:root[data-tema='elegante'] .stat-value {
+  color: var(--accent-2);
+}
+
+:root[data-tema='elegante'] .page-title {
+  letter-spacing: 0.2px;
+}
+
+:root[data-tema='elegante'] .sidebar-logo,
+:root[data-tema='elegante'] .topbar-avatar,
+:root[data-tema='elegante'] .accesso-logo {
+  background: linear-gradient(135deg, #e0c483, #a9832f);
+  color: #14120c;
+  box-shadow: 0 4px 12px rgba(197, 160, 89, 0.28);
+}
+
+/* ---- tema coloratissimo: si attiva dalle Impostazioni ---- */
+:root[data-tema='festoso'] {
+  --bg: #fdf4ff;
+  --bg-content: #ffffff;
+  --bg-header: #ffffff;
+
+  --sidebar-bg: #6d28d9;
+  --sidebar-bg-2: #db2777;
+  --sidebar-text: #f3e8ff;
+  --sidebar-text-muted: #d8b4fe;
+  --sidebar-active-bg: rgba(255, 255, 255, 0.22);
+  --sidebar-active-text: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.22);
+
+  --text: #4c1d63;
+  --text-h: #2e1065;
+  --text-muted: #9333ea;
+  --border: #f0d5fb;
+
+  --accent: #c026d3;
+  --accent-2: #f472b6;
+  --accent-soft: #fce7f3;
+  --accent-text: #a21caf;
+
+  --shadow-sm: 0 2px 6px rgba(192, 38, 211, 0.14);
+  --shadow-md: 0 6px 18px rgba(192, 38, 211, 0.18);
+  --shadow-lg: 0 14px 34px rgba(192, 38, 211, 0.26);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-tema='festoso'] {
+    --bg: #1b0b2e;
+    --bg-content: #2a1044;
+    --bg-header: #2a1044;
+
+    --sidebar-bg: #4c1d95;
+    --sidebar-bg-2: #831843;
+    --sidebar-text: #f5d0fe;
+    --sidebar-text-muted: #c084fc;
+
+    --text: #e9d5ff;
+    --text-h: #fdf4ff;
+    --text-muted: #c084fc;
+    --border: #4a1d6b;
+
+    --accent: #e879f9;
+    --accent-2: #f9a8d4;
+    --accent-soft: #3b1257;
+    --accent-text: #f0abfc;
+  }
+}
+
+/* nel tema colorato i riquadri prendono sfumature e bordi più morbidi */
+:root[data-tema='festoso'] .task-tile {
+  background: linear-gradient(140deg, #ffffff 0%, var(--accent-soft) 100%);
+  border-radius: 20px;
+}
+
+:root[data-tema='festoso'] .task-tile-icon-wrap {
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  color: #fff;
+  border-radius: 16px;
+}
+
+:root[data-tema='festoso'] .card,
+:root[data-tema='festoso'] .stat-card,
+:root[data-tema='festoso'] .job-form {
+  border-radius: 18px;
+}
+
+:root[data-tema='festoso'] .stat-value {
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+:root[data-tema='festoso'] .dashboard-section-title,
+:root[data-tema='festoso'] .job-list-label {
+  color: var(--accent-text);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1, h2, h3 {
+  color: var(--text-h);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+a {
+  color: inherit;
+}

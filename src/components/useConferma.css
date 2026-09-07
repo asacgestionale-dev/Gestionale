@@ -1,0 +1,67 @@
+.conferma-sfondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(20, 28, 36, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.conferma-riquadro {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-content);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+
+.conferma-titolo {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.conferma-messaggio {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.conferma-azioni {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.conferma-annulla,
+.conferma-procedi {
+  border-radius: 8px;
+  padding: 9px 18px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.conferma-annulla {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.conferma-annulla:hover {
+  background: var(--bg);
+}
+
+.conferma-procedi {
+  border: none;
+  background: #b0503b;
+  color: #fff;
+}
+
+.conferma-procedi:hover {
+  background: #93412f;
+}

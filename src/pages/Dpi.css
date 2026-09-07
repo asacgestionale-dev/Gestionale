@@ -1,0 +1,45 @@
+.dpi-riga-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.dpi-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 170px;
+}
+
+.dpi-campo.dpi-campo-stretto {
+  flex: 0 0 120px;
+  min-width: 120px;
+}
+
+.dpi-campo input,
+.dpi-campo select {
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  width: 100%;
+}
+
+.dpi-campo input:focus,
+.dpi-campo select:focus {
+  border-color: var(--accent-2);
+}
+
+.dpi-riga-form > button {
+  height: 38px;
+  padding: 0 20px;
+  flex-shrink: 0;
+}

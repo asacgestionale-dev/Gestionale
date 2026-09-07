@@ -1,0 +1,154 @@
+.cliente-riga {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.cliente-campo {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cliente-campo input {
+  width: 100%;
+}
+
+.cliente-aggiungi {
+  width: 38px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cliente-aggiungi:hover {
+  background: var(--accent-text);
+}
+
+.cliente-suggerimenti {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 25;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.cliente-suggerimenti li + li {
+  border-top: 1px solid var(--border);
+}
+
+.cliente-suggerimenti button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 7px;
+}
+
+.cliente-suggerimenti button:hover {
+  background: var(--accent-soft);
+}
+
+.cliente-nome {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.cliente-sede {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.cliente-vuoto {
+  padding: 8px 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* finestra di creazione rapida del cliente */
+.modale-sfondo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(20, 28, 36, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modale {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-content);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+}
+
+.modale-titolo {
+  margin: 0 0 2px;
+  font-size: 19px;
+}
+
+.modale-sotto {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.modale-form {
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.modale-azioni {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.modale-azioni button {
+  flex: 1;
+}
+
+.job-form button.modale-annulla {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.job-form button.modale-annulla:hover {
+  background: var(--bg);
+  color: var(--text);
+}

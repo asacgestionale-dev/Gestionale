@@ -1,0 +1,75 @@
+.avanzamento {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.avanzamento-barra {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.avanzamento-barra span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 0.25s ease;
+}
+
+.movimento-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.movimento-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.movimento-campo.movimento-note {
+  flex: 1;
+  min-width: 200px;
+}
+
+.movimento-campo input,
+.movimento-campo select {
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.movimento-campo input:focus,
+.movimento-campo select:focus {
+  border-color: var(--accent-2);
+}
+
+.movimento-campo input[type='number'] {
+  width: 120px;
+}
+
+.movimento-campo input[type='date'] {
+  width: 160px;
+}
+
+.movimento-form .btn-chiudi {
+  height: 38px;
+  padding: 0 18px;
+}

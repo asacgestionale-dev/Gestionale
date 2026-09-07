@@ -1,0 +1,490 @@
+.nuovo-lavoro-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.nuovo-lavoro-form {
+  width: 100%;
+}
+
+.pagina-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px 28px;
+  margin-bottom: 18px;
+  align-items: start;
+}
+
+.form-colonna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-colonna .job-form-label:not(:first-child) {
+  margin-top: 10px;
+}
+
+/* tutti i controlli del form hanno la stessa altezza, così le colonne restano allineate */
+.nuovo-lavoro-form input:not([type='checkbox']),
+.nuovo-lavoro-form select,
+.nuovo-lavoro-form .btn-mappa,
+.nuovo-lavoro-form .cliente-aggiungi,
+.nuovo-lavoro-form .materiale-add,
+.nuovo-lavoro-form .gps-btn,
+.appuntamento-riga input,
+.appuntamento-riga button {
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.nuovo-lavoro-form .job-form-label {
+  min-height: 15px;
+  line-height: 15px;
+}
+
+.nuovo-lavoro-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  resize: vertical;
+}
+
+.nuovo-lavoro-form textarea:focus {
+  border-color: var(--accent-2);
+}
+
+.nuovo-lavoro-form .job-form-label:not(:first-child) {
+  margin-top: 10px;
+}
+
+.nuovo-lavoro-lista {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nuovo-lavoro-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* campi obbligatori non compilati */
+.campo-errore,
+.nuovo-lavoro-form input.campo-errore {
+  border-radius: 8px;
+}
+
+.nuovo-lavoro-form input.campo-errore {
+  border-color: #c0503b;
+  background: #fdf1ee;
+}
+
+.campo-errore input[type='text'],
+.campo-errore .cliente-campo input,
+.campo-errore .input-indirizzo input {
+  border-color: #c0503b;
+  background: #fdf1ee;
+}
+
+.label-errore {
+  color: #c0503b !important;
+}
+
+.messaggio-errore {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #c0503b;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nuovo-lavoro-form input.campo-errore,
+  .campo-errore input[type='text'],
+  .campo-errore .cliente-campo input,
+  .campo-errore .input-indirizzo input {
+    border-color: #c9705c;
+    background: #35211d;
+  }
+
+  .label-errore,
+  .messaggio-errore {
+    color: #e0a08f !important;
+  }
+}
+
+.appuntamento-box {
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appuntamento-riga {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.appuntamento-riga input[type='date'] {
+  width: 170px;
+}
+
+.appuntamento-riga input[type='time'] {
+  width: 110px;
+}
+
+.appuntamento-riga input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.appuntamento-riga input:focus {
+  border-color: var(--accent-2);
+}
+
+.appuntamento-riga input:disabled {
+  opacity: 0.5;
+}
+
+.job-form button.appuntamento-annulla {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0 14px;
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.job-form button.appuntamento-annulla:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.appuntamento-nota {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.azioni-scheda {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lista-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.elenco-clienti {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.campo-ricerca {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  width: 240px;
+  max-width: 100%;
+}
+
+.campo-ricerca:focus {
+  border-color: var(--accent-2);
+}
+
+.vai-assegnazione {
+  display: block;
+  text-align: center;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.vai-assegnazione:hover {
+  background: var(--accent-text);
+}
+
+.materiale-riga {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.materiale-riga input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* i due pulsanti "+" (cliente e materiali) hanno la stessa forma e altezza */
+.materiale-add {
+  flex-shrink: 0;
+  width: 38px;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* importo con allegato del preventivo */
+.importo-riga {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.importo-riga input[type='number'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.preventivo-carica,
+.preventivo-allegato {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.preventivo-carica {
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+}
+
+.preventivo-carica:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.preventivo-allegato {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  cursor: default;
+}
+
+.preventivo-allegato button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 2px;
+  opacity: 0.7;
+}
+
+.preventivo-allegato button:hover {
+  opacity: 1;
+}
+
+.materiale-add:hover {
+  background: var(--accent-text);
+}
+
+.materiale-lista {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.materiale-lista li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: var(--bg);
+  font-size: 12.5px;
+}
+
+.materiale-lista button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.materiale-lista button:hover {
+  opacity: 1;
+}
+
+.check-riga {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.check-riga input {
+  width: auto;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.indirizzo-anagrafica {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.gps-btn {
+  border: 1px solid var(--accent) !important;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: transparent !important;
+  color: var(--accent-text) !important;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gps-btn:hover {
+  background: var(--accent-soft) !important;
+}
+
+.gps-stato {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gps-ok {
+  color: #4f7a4a;
+  font-weight: 600;
+}
+
+/* ---- schede lavoro nella colonna destra ---- */
+
+.lavoro-scheda {
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  box-shadow: var(--shadow-sm);
+  font-size: 12.5px;
+}
+
+.lavoro-scheda-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lavoro-scheda-titolo {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.lavoro-scheda-meta {
+  opacity: 0.85;
+  line-height: 1.35;
+}
+
+.lavoro-scheda-note {
+  margin: 4px 0;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.lavoro-scheda-link {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cliente-tel {
+  color: var(--text-muted);
+}
+
+.riga-elimina {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.riga-elimina:hover {
+  color: #b0503b;
+}

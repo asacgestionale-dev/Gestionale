@@ -1,0 +1,405 @@
+.assign-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* ---- pannello lavori a sinistra ---- */
+
+.job-panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.job-form {
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.job-form-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.job-form input,
+.job-form select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.job-form input:focus,
+.job-form select:focus {
+  border-color: var(--accent-2);
+}
+
+.job-form button {
+  margin-top: 4px;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.job-form button:hover {
+  background: var(--accent-text);
+}
+
+.job-list {
+  background: var(--bg-content);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 140px;
+}
+
+.job-list-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.job-list-empty {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin: 4px 0;
+}
+
+.job-card-riga {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.job-card-tragitto {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.75;
+  margin-top: 3px;
+}
+
+.timeline-job-km {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.job-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: grab;
+  border: 1px solid transparent;
+  box-shadow: var(--shadow-sm);
+}
+
+.job-card:active {
+  cursor: grabbing;
+}
+
+.job-card-durata {
+  font-size: 11.5px;
+  font-weight: 700;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+/* ---- timeline ---- */
+
+.timeline-wrap {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.timeline-header,
+.team-row {
+  display: flex;
+  min-width: 900px;
+}
+
+.timeline-header {
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0 8px;
+}
+
+.team-info-spacer,
+.team-info {
+  width: 190px;
+  flex-shrink: 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.timeline-hours {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+}
+
+.hour-label {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.team-row {
+  border-top: 1px solid var(--border);
+}
+
+.team-row:first-of-type {
+  border-top: none;
+}
+
+/* riga dei lavori pianificati ma ancora senza squadra */
+.team-row-libera {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    var(--bg) 8px,
+    var(--bg) 16px
+  );
+  border-top: 2px dashed var(--border);
+}
+
+.team-row-libera .team-name {
+  color: var(--text-muted);
+}
+
+.team-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.team-members {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.team-timeline {
+  flex: 1;
+  position: relative;
+  min-height: 68px;
+}
+
+.timeline-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--border);
+  pointer-events: none;
+}
+
+/* fascia gialla del viaggio di andata dalla base al cantiere */
+.timeline-viaggio {
+  position: absolute;
+  top: 24px;
+  height: 20px;
+  background: repeating-linear-gradient(
+    45deg,
+    #f5d98b,
+    #f5d98b 5px,
+    #efc95f 5px,
+    #efc95f 10px
+  );
+  border-radius: 5px 0 0 5px;
+  z-index: 1;
+  cursor: help;
+}
+
+/* tooltip immediato con orario di partenza e durata del viaggio */
+.timeline-viaggio::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: 180px;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--sidebar-bg);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.timeline-viaggio:hover::after {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .timeline-viaggio {
+    background: repeating-linear-gradient(
+      45deg,
+      #6b5a2a,
+      #6b5a2a 5px,
+      #8a7433 5px,
+      #8a7433 10px
+    );
+  }
+}
+
+/* lavoro con appuntamento: orario e giorno sono vincolati */
+.timeline-job-fisso {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.timeline-job-pin {
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.timeline-job-ora {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+
+.timeline-job {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  border-radius: 8px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: grab;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
+}
+
+.timeline-job:active {
+  cursor: grabbing;
+}
+
+.timeline-job-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.timeline-job-remove {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 2px;
+}
+
+.timeline-job-remove:hover {
+  opacity: 1;
+}
+
+/* ---- palette lavori ---- */
+
+.job-blu {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.job-verde {
+  background: #e3efe1;
+  color: #4f7a4a;
+}
+
+.job-ambra {
+  background: #f5ecd8;
+  color: #93762f;
+}
+
+.job-rosa {
+  background: #f8e4e0;
+  color: #b0503b;
+}
+
+.job-viola {
+  background: #ece4f6;
+  color: #6c4f96;
+}
+
+@media (prefers-color-scheme: dark) {
+  .job-verde {
+    background: #2a352a;
+    color: #9dc99a;
+  }
+  .job-ambra {
+    background: #3a3121;
+    color: #e0c47f;
+  }
+  .job-rosa {
+    background: #3a2622;
+    color: #e0a08f;
+  }
+  .job-viola {
+    background: #2c2438;
+    color: #c5aee0;
+  }
+}
