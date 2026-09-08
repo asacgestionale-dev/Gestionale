@@ -133,3 +133,21 @@
   background: var(--accent-soft);
   color: var(--accent-text);
 }
+
+.password-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: end;
+  gap: 14px;
+  max-width: 720px;
+}
+
+.password-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.password-form button {
+  height: 40px;
+}

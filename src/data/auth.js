@@ -98,3 +98,18 @@ export async function cambiaRuolo(id, ruolo) {
 export async function eliminaUtente(id) {
   await supabase.from('profili').delete().eq('id', id)
 }
+
+// Cambio della password dell'utente collegato: la vecchia viene richiesta di
+// nuovo al server come controllo, poi Supabase sostituisce quella salvata.
+export async function cambiaPassword(vecchia, nuova) {
+  const { data } = await supabase.auth.getSession()
+  const email = data.session?.user?.email
+  if (!email) return { errore: 'Sessione scaduta: rifai l\'accesso.' }
+
+  const verifica = await supabase.auth.signInWithPassword({ email, password: vecchia })
+  if (verifica.error) return { errore: 'La password attuale non è corretta.' }
+
+  const { error } = await supabase.auth.updateUser({ password: nuova })
+  if (error) return { errore: error.message }
+  return { ok: true }
+}
