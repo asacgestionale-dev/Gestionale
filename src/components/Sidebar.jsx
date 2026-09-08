@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { SEZIONI, caricaTileAttivi, salvaTileAttivi } from '../data/menu'
-import { chiudiSessione } from '../data/auth'
+import { esci } from '../data/auth'
 import { IconHome, IconUsers, IconSettings, IconChevronRight } from './icons'
 import './Sidebar.css'
 
@@ -176,8 +176,8 @@ export default function Sidebar({ utente, onEsci }) {
         <button
           type="button"
           className="sidebar-esci"
-          onClick={() => {
-            chiudiSessione()
+          onClick={async () => {
+            await esci()
             onEsci?.()
           }}
           title="Esci dal gestionale"

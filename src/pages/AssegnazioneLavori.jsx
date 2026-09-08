@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { SQUADRE_BASE, oggiISO, caricaComposizione } from '../data/squadre'
-import { caricaLavori, salvaLavori } from '../data/lavori'
+import { caricaLavori, aggiornaLavoro } from '../data/lavori'
 import { BASE, MINUTI_SOSTA, tragittoPerLavoro, formattaTragitto } from '../data/logistica'
 import './AssegnazioneLavori.css'
 import './NuovoLavoro.css'
@@ -53,12 +53,20 @@ function minutiDaEvento(e) {
 
 export default function AssegnazioneLavori() {
   const navigate = useNavigate()
-  const [jobs, setJobs] = useState(caricaLavori)
+  const [jobs, setJobs] = useState([])
   const [data, setData] = useState(oggiISO)
+  const [composizione, setComposizione] = useState({})
+
+  useEffect(() => {
+    caricaLavori().then(setJobs)
+  }, [])
 
   // composizione delle squadre della giornata mostrata
-  const composizione = caricaComposizione(data)
-  const TEAMS = SQUADRE_BASE.map((s) => ({ ...s, membri: composizione[s.id] }))
+  useEffect(() => {
+    caricaComposizione(data).then(setComposizione)
+  }, [data])
+
+  const TEAMS = SQUADRE_BASE.map((s) => ({ ...s, membri: composizione[s.id] || [] }))
 
   // i lavori pianificati senza squadra restano in una riga a parte
   const RIGA_SENZA_SQUADRA = { id: null, nome: 'Da assegnare a squadra', membri: [] }
@@ -79,8 +87,21 @@ export default function AssegnazioneLavori() {
   // distanza e tempo di viaggio dalla base, per ogni lavoro con un luogo indicato
   const [tragitti, setTragitti] = useState({})
 
+  // si salvano solo i lavori la cui pianificazione è cambiata, non tutto l'elenco
+  const assegnazioniPrecedenti = useRef(null)
+
   useEffect(() => {
-    salvaLavori(jobs)
+    const attuali = Object.fromEntries(jobs.map((j) => [j.id, j.assegnato]))
+    const prima = assegnazioniPrecedenti.current
+
+    if (prima) {
+      for (const [id, assegnato] of Object.entries(attuali)) {
+        if (JSON.stringify(prima[id]) !== JSON.stringify(assegnato)) {
+          aggiornaLavoro(id, { assegnato })
+        }
+      }
+    }
+    assegnazioniPrecedenti.current = attuali
   }, [jobs])
 
   // il calcolo si rifà quando cambia una assegnazione: la catena dei tragitti dipende

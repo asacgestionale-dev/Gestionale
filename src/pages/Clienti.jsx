@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { caricaClienti, salvaClienti } from '../data/clienti'
+import { caricaClienti, aggiungiCliente, eliminaCliente } from '../data/clienti'
 import InputIndirizzo from '../components/InputIndirizzo'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
@@ -10,21 +10,28 @@ const VUOTO = { nome: '', indirizzo: '', referente: '', telefono: '' }
 
 export default function Clienti() {
   const navigate = useNavigate()
-  const [clienti, setClienti] = useState(caricaClienti)
+  const [clienti, setClienti] = useState([])
   const [form, setForm] = useState(VUOTO)
   const [ricerca, setRicerca] = useState('')
   const { chiedi, dialogo } = useConferma()
+
+  async function ricarica() {
+    setClienti(await caricaClienti())
+  }
+
+  useEffect(() => {
+    ricarica()
+  }, [])
 
   function aggiorna(campo, valore) {
     setForm((prev) => ({ ...prev, [campo]: valore }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.nome.trim() || !form.indirizzo.trim()) return
-    const next = [...clienti, { ...form, id: 'c' + Date.now() }]
-    setClienti(next)
-    salvaClienti(next)
+    await aggiungiCliente(form)
+    await ricarica()
     setForm(VUOTO)
   }
 
@@ -33,10 +40,9 @@ export default function Clienti() {
     chiedi({
       titolo: 'Eliminare il cliente?',
       messaggio: `"${cliente.nome}" verrà rimosso dall'anagrafica. I lavori collegati restano, ma senza cliente.`,
-      onConferma: () => {
-        const next = clienti.filter((c) => c.id !== cliente.id)
-        setClienti(next)
-        salvaClienti(next)
+      onConferma: async () => {
+        await eliminaCliente(cliente.id)
+        await ricarica()
       },
     })
   }

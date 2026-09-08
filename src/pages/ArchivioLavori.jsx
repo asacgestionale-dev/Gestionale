@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { caricaLavori, formattaEuro } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
@@ -27,8 +27,13 @@ function statoLavoro(l) {
 
 export default function ArchivioLavori() {
   const navigate = useNavigate()
-  const [lavori] = useState(caricaLavori)
-  const [clienti] = useState(caricaClienti)
+  const [lavori, setLavori] = useState([])
+  const [clienti, setClienti] = useState([])
+
+  useEffect(() => {
+    caricaLavori().then(setLavori)
+    caricaClienti().then(setClienti)
+  }, [])
   const [ricerca, setRicerca] = useState('')
   const [filtroStato, setFiltroStato] = useState('Tutti')
 

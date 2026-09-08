@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { utenteCorrente } from './data/auth'
 import Accesso from './pages/Accesso'
@@ -22,7 +22,18 @@ import Squadre from './pages/Squadre'
 import Dpi from './pages/Dpi'
 
 function App() {
-  const [utente, setUtente] = useState(utenteCorrente)
+  const [utente, setUtente] = useState(null)
+  const [verifica, setVerifica] = useState(true)
+
+  // la sessione si recupera dal server: finché non si sa, non si mostra nulla
+  useEffect(() => {
+    utenteCorrente().then((u) => {
+      setUtente(u)
+      setVerifica(false)
+    })
+  }, [])
+
+  if (verifica) return <div className="caricamento-iniziale">Caricamento…</div>
 
   // senza sessione attiva si passa dalla schermata di accesso/registrazione
   if (!utente) return <Accesso onAccesso={setUtente} />

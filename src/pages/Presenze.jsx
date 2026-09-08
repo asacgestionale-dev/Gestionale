@@ -1,27 +1,40 @@
 import { useEffect, useState } from 'react'
-import { DIPENDENTI } from '../data/dipendenti'
+import { nomiDipendenti } from '../data/dipendenti'
 import { oggiISO } from '../data/squadre'
 import {
   STATI_PRESENZA,
   caricaPresenze,
-  salvaPresenze,
+  salvaStato,
   applicaPeriodo,
   giorniTra,
 } from '../data/presenze'
-import { caricaDocumenti, salvaDocumento, eliminaDocumento } from '../data/documenti'
+import {
+  caricaDocumenti,
+  salvaDocumento,
+  eliminaDocumento,
+  urlDocumento,
+} from '../data/documenti'
 import { useConferma } from '../components/useConferma'
 import './Presenze.css'
 
 export default function Presenze() {
   const [data, setData] = useState(oggiISO)
-  const [presenze, setPresenze] = useState(() => caricaPresenze(oggiISO()))
+  const [presenze, setPresenze] = useState({})
+  const [DIPENDENTI, setDipendenti] = useState([])
   // dipendente per cui si sta indicando la data di fine assenza
   const [periodo, setPeriodo] = useState(null)
   const { chiedi, dialogo } = useConferma()
 
+  useEffect(() => {
+    nomiDipendenti().then(setDipendenti)
+  }, [])
+
+  useEffect(() => {
+    caricaPresenze(data).then(setPresenze)
+  }, [data])
+
   function cambiaData(nuovaData) {
     setData(nuovaData)
-    setPresenze(caricaPresenze(nuovaData))
     setPeriodo(null)
   }
 
@@ -37,12 +50,9 @@ export default function Presenze() {
     month: 'long',
   })
 
-  function cambiaStato(nome, stato) {
-    setPresenze((prev) => {
-      const next = { ...prev, [nome]: stato }
-      salvaPresenze(data, next)
-      return next
-    })
+  async function cambiaStato(nome, stato) {
+    setPresenze((prev) => ({ ...prev, [nome]: stato }))
+    await salvaStato(data, nome, stato)
     // per le assenze si chiede fino a quando dura
     if (stato !== 'Presente') {
       setPeriodo({ nome, stato, fine: data })
@@ -51,10 +61,10 @@ export default function Presenze() {
     }
   }
 
-  function confermaPeriodo() {
+  async function confermaPeriodo() {
     if (!periodo || periodo.fine < data) return
-    applicaPeriodo(periodo.nome, periodo.stato, data, periodo.fine)
-    setPresenze(caricaPresenze(data))
+    await applicaPeriodo(periodo.nome, periodo.stato, data, periodo.fine)
+    setPresenze(await caricaPresenze(data))
     setPeriodo(null)
   }
 
@@ -85,7 +95,7 @@ export default function Presenze() {
       annullato = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, JSON.stringify(presenze)])
+  }, [data, JSON.stringify(presenze), DIPENDENTI.length])
 
   async function caricaCertificato(nome, file) {
     if (!file) return
@@ -109,10 +119,9 @@ export default function Presenze() {
     })
   }
 
-  function apriCertificato(doc) {
-    const url = URL.createObjectURL(doc.file)
-    window.open(url, '_blank', 'noopener')
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  async function apriCertificato(doc) {
+    const url = await urlDocumento(doc.id)
+    if (url) window.open(url, '_blank', 'noopener')
   }
 
   return (

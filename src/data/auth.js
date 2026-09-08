@@ -1,124 +1,100 @@
-// Accesso al gestionale. Le credenziali restano su questo browser:
-// la password non viene mai salvata in chiaro, se ne conserva solo un digest.
+import { supabase } from '../supabaseClient'
 
-const UTENTI_KEY = 'gestionale-utenti'
-const SESSIONE_KEY = 'gestionale-sessione'
+// Accesso al gestionale tramite Supabase Auth. Le password sono gestite dal
+// server: qui non transitano mai in chiaro né vengono memorizzate.
 
 export const RUOLI_UTENTE = ['Amministratore', 'Responsabile', 'Operaio']
 
-export function caricaUtenti() {
-  try {
-    return JSON.parse(localStorage.getItem(UTENTI_KEY) || '[]')
-  } catch {
-    return []
-  }
-}
-
-export function salvaUtenti(utenti) {
-  try {
-    localStorage.setItem(UTENTI_KEY, JSON.stringify(utenti))
-  } catch {
-    // storage non disponibile: la registrazione vale solo per questa sessione
-  }
-}
-
-// Digest della password: sufficiente per un'app locale, non sostituisce
-// l'autenticazione di un server quando i dati usciranno da questo PC.
-async function digest(password) {
-  const dati = new TextEncoder().encode('gestionale::' + password)
-  const hash = await crypto.subtle.digest('SHA-256', dati)
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
 export async function registra({ nome, email, password, ruolo }) {
-  const utenti = caricaUtenti()
-  const emailPulita = email.trim().toLowerCase()
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password,
+    options: { data: { nome: nome.trim(), ruolo } },
+  })
 
-  if (utenti.some((u) => u.email === emailPulita)) {
-    return { errore: 'Esiste già un account con questa email.' }
+  if (error) {
+    if (error.message.includes('already registered')) {
+      return { errore: 'Esiste già un account con questa email.' }
+    }
+    return { errore: error.message }
   }
 
-  const primo = utenti.length === 0
-  const utente = {
-    id: 'u' + Date.now(),
-    nome: nome.trim(),
-    email: emailPulita,
-    // il primo registrato è l'amministratore che configura il gestionale: entra subito.
-    // tutti gli altri restano in attesa che l'amministratore approvi l'account
-    ruolo: primo ? 'Amministratore' : ruolo,
-    approvato: primo,
-    passwordHash: await digest(password),
-    creatoIl: new Date().toISOString(),
-  }
+  // se il progetto richiede la verifica dell'indirizzo, la registrazione non apre sessione
+  if (!data.session) return { inAttesa: true, confermaEmail: true }
 
-  salvaUtenti([...utenti, utente])
-  return { utente, inAttesa: !primo }
+  // il profilo viene creato dal database: il primo iscritto è amministratore approvato
+  const profilo = await profiloDi(data.user?.id)
+  if (profilo?.approvato) return { utente: profilo }
+
+  // gli altri restano in attesa: la sessione aperta dalla registrazione va chiusa
+  await supabase.auth.signOut()
+  return { utente: profilo, inAttesa: true }
 }
 
 export async function accedi(email, password) {
-  const utenti = caricaUtenti()
-  const utente = utenti.find((u) => u.email === email.trim().toLowerCase())
-  if (!utente) return { errore: 'Nessun account registrato con questa email.' }
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password,
+  })
 
-  const hash = await digest(password)
-  if (hash !== utente.passwordHash) return { errore: 'Password non corretta.' }
+  if (error) {
+    if (error.message.includes('Invalid login')) {
+      return { errore: 'Email o password non corretti.' }
+    }
+    return { errore: error.message }
+  }
 
-  if (!utente.approvato) {
+  const profilo = await profiloDi(data.user.id)
+  if (!profilo?.approvato) {
+    await supabase.auth.signOut()
     return {
       errore:
         "Registrazione in attesa: l'amministratore deve approvare il tuo account prima del primo accesso.",
     }
   }
 
-  return { utente }
+  return { utente: profilo }
 }
 
-export function approvaUtente(id) {
-  salvaUtenti(caricaUtenti().map((u) => (u.id === id ? { ...u, approvato: true } : u)))
+export async function esci() {
+  await supabase.auth.signOut()
 }
 
-export function revocaUtente(id) {
-  salvaUtenti(caricaUtenti().map((u) => (u.id === id ? { ...u, approvato: false } : u)))
+async function profiloDi(id) {
+  if (!id) return null
+  const { data } = await supabase.from('profili').select('*').eq('id', id).maybeSingle()
+  return data
 }
 
-export function cambiaRuolo(id, ruolo) {
-  salvaUtenti(caricaUtenti().map((u) => (u.id === id ? { ...u, ruolo } : u)))
+// Utente della sessione in corso, se il suo account è ancora approvato.
+export async function utenteCorrente() {
+  const { data } = await supabase.auth.getSession()
+  if (!data.session) return null
+  const profilo = await profiloDi(data.session.user.id)
+  return profilo?.approvato ? profilo : null
 }
 
-export function eliminaUtente(id) {
-  salvaUtenti(caricaUtenti().filter((u) => u.id !== id))
+// ---- gestione degli account, riservata all'amministratore ----
+
+export async function caricaUtenti() {
+  const { data } = await supabase.from('profili').select('*').order('creato_il')
+  return data || []
 }
 
-export function apriSessione(utente) {
-  try {
-    localStorage.setItem(SESSIONE_KEY, JSON.stringify({ id: utente.id, email: utente.email }))
-  } catch {
-    // storage non disponibile: la sessione dura finché resta aperta la pagina
-  }
+export async function approvaUtente(id) {
+  await supabase.from('profili').update({ approvato: true }).eq('id', id)
 }
 
-export function chiudiSessione() {
-  try {
-    localStorage.removeItem(SESSIONE_KEY)
-  } catch {
-    // niente da fare
-  }
+export async function revocaUtente(id) {
+  await supabase.from('profili').update({ approvato: false }).eq('id', id)
 }
 
-export function utenteCorrente() {
-  try {
-    const sessione = JSON.parse(localStorage.getItem(SESSIONE_KEY) || 'null')
-    if (!sessione) return null
-    const utente = caricaUtenti().find((u) => u.id === sessione.id)
-    // un accesso revocato dall'amministratore decade anche a sessione aperta
-    return utente?.approvato ? utente : null
-  } catch {
-    return null
-  }
+export async function cambiaRuolo(id, ruolo) {
+  await supabase.from('profili').update({ ruolo }).eq('id', id)
 }
 
-export function ciSonoUtenti() {
-  return caricaUtenti().length > 0
+// Rimuove il profilo: l'utente perde l'accesso ai dati anche se l'account
+// di autenticazione resta (eliminabile solo dal pannello Supabase).
+export async function eliminaUtente(id) {
+  await supabase.from('profili').delete().eq('id', id)
 }

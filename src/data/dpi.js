@@ -1,4 +1,4 @@
-// Anagrafica dei dispositivi di protezione individuale e loro consegna al personale.
+import { supabase } from '../supabaseClient'
 
 export const CATEGORIE_DPI = [
   'Testa',
@@ -12,49 +12,76 @@ export const CATEGORIE_DPI = [
   'Alta visibilità',
 ]
 
-const CATALOGO_KEY = 'gestionale-dpi'
-const CONSEGNE_KEY = 'gestionale-dpi-consegne'
-
-const CATALOGO_INIZIALE = [
-  { id: 'd1', nome: 'Elmetto di protezione', categoria: 'Testa', norma: 'EN 397', durataMesi: 60, note: '' },
-  { id: 'd2', nome: 'Scarpe antinfortunistiche S3', categoria: 'Piedi', norma: 'EN ISO 20345', durataMesi: 12, note: '' },
-  { id: 'd3', nome: 'Guanti da lavoro', categoria: 'Mani', norma: 'EN 388', durataMesi: 6, note: '' },
-  { id: 'd4', nome: 'Gilet alta visibilità', categoria: 'Alta visibilità', norma: 'EN ISO 20471', durataMesi: 24, note: '' },
-  { id: 'd5', nome: 'Imbracatura anticaduta', categoria: 'Anticaduta', norma: 'EN 361', durataMesi: 12, note: 'Verifica periodica obbligatoria' },
-]
-
-export function caricaCatalogoDpi() {
-  try {
-    const raw = localStorage.getItem(CATALOGO_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {
-    // storage non disponibile: si parte dal catalogo di base
-  }
-  return CATALOGO_INIZIALE
-}
-
-export function salvaCatalogoDpi(lista) {
-  try {
-    localStorage.setItem(CATALOGO_KEY, JSON.stringify(lista))
-  } catch {
-    // storage non disponibile: il catalogo resta in memoria
+function daDb(d) {
+  return {
+    id: d.id,
+    nome: d.nome,
+    categoria: d.categoria || '',
+    norma: d.norma || '',
+    durataMesi: d.durata_mesi,
+    note: d.note || '',
   }
 }
 
-export function caricaConsegne() {
-  try {
-    return JSON.parse(localStorage.getItem(CONSEGNE_KEY) || '[]')
-  } catch {
-    return []
+function consegnaDaDb(c) {
+  return {
+    id: c.id,
+    dpiId: c.dpi_id,
+    dipendente: c.dipendente,
+    taglia: c.taglia || '',
+    dataConsegna: c.data_consegna,
+    scadenza: c.scadenza,
+    note: c.note || '',
   }
 }
 
-export function salvaConsegne(lista) {
-  try {
-    localStorage.setItem(CONSEGNE_KEY, JSON.stringify(lista))
-  } catch {
-    // storage non disponibile: le consegne restano in memoria
-  }
+export async function caricaCatalogoDpi() {
+  const { data } = await supabase.from('dpi').select('*').order('nome')
+  return (data || []).map(daDb)
+}
+
+export async function aggiungiDpi(d) {
+  const { data } = await supabase
+    .from('dpi')
+    .insert({
+      nome: d.nome.trim(),
+      categoria: d.categoria,
+      norma: d.norma || '',
+      durata_mesi: Number(d.durataMesi) || 0,
+      note: d.note || '',
+    })
+    .select()
+    .single()
+  return daDb(data)
+}
+
+export async function eliminaDpi(id) {
+  await supabase.from('dpi').delete().eq('id', id)
+}
+
+export async function caricaConsegne() {
+  const { data } = await supabase.from('dpi_consegne').select('*').order('scadenza')
+  return (data || []).map(consegnaDaDb)
+}
+
+export async function aggiungiConsegna(c) {
+  const { data } = await supabase
+    .from('dpi_consegne')
+    .insert({
+      dpi_id: c.dpiId,
+      dipendente: c.dipendente,
+      taglia: c.taglia || '',
+      data_consegna: c.dataConsegna,
+      scadenza: c.scadenza || null,
+      note: c.note || '',
+    })
+    .select()
+    .single()
+  return consegnaDaDb(data)
+}
+
+export async function eliminaConsegna(id) {
+  await supabase.from('dpi_consegne').delete().eq('id', id)
 }
 
 // La scadenza si ricava dalla data di consegna più la validità del dispositivo.

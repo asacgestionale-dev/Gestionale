@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   RUOLI_UTENTE,
   caricaUtenti,
@@ -18,12 +18,17 @@ function formattaData(iso) {
 }
 
 export default function Utenti({ utente }) {
-  const [utenti, setUtenti] = useState(caricaUtenti)
+  const [utenti, setUtenti] = useState([])
   const { chiedi, dialogo } = useConferma()
 
-  function ricarica() {
-    setUtenti(caricaUtenti())
+  async function ricarica() {
+    setUtenti(await caricaUtenti())
   }
+
+  useEffect(() => {
+    ricarica()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function chiediEliminazione(u, richiesta) {
     chiedi({
@@ -32,9 +37,9 @@ export default function Utenti({ utente }) {
         ? `La richiesta di "${u.nome}" (${u.email}) verrà eliminata: dovrà registrarsi di nuovo.`
         : `L'account di "${u.nome}" (${u.email}) verrà eliminato e non potrà più accedere.`,
       testoConferma: richiesta ? 'Rifiuta' : 'Elimina',
-      onConferma: () => {
-        eliminaUtente(u.id)
-        ricarica()
+      onConferma: async () => {
+        await eliminaUtente(u.id)
+        await ricarica()
       },
     })
   }
@@ -84,9 +89,9 @@ export default function Utenti({ utente }) {
                     <select
                       className="badge-select badge-in-corso"
                       value={u.ruolo}
-                      onChange={(e) => {
-                        cambiaRuolo(u.id, e.target.value)
-                        ricarica()
+                      onChange={async (e) => {
+                        await cambiaRuolo(u.id, e.target.value)
+                        await ricarica()
                       }}
                     >
                       {RUOLI_UTENTE.map((r) => (
@@ -96,14 +101,14 @@ export default function Utenti({ utente }) {
                       ))}
                     </select>
                   </td>
-                  <td>{formattaData(u.creatoIl)}</td>
+                  <td>{formattaData(u.creato_il)}</td>
                   <td className="azioni-utente">
                     <button
                       type="button"
                       className="btn-chiudi"
-                      onClick={() => {
-                        approvaUtente(u.id)
-                        ricarica()
+                      onClick={async () => {
+                        await approvaUtente(u.id)
+                        await ricarica()
                       }}
                     >
                       Approva
@@ -150,9 +155,9 @@ export default function Utenti({ utente }) {
                       className="badge-select badge-completato"
                       value={u.ruolo}
                       disabled={seStesso}
-                      onChange={(e) => {
-                        cambiaRuolo(u.id, e.target.value)
-                        ricarica()
+                      onChange={async (e) => {
+                        await cambiaRuolo(u.id, e.target.value)
+                        await ricarica()
                       }}
                     >
                       {RUOLI_UTENTE.map((r) => (
@@ -162,16 +167,16 @@ export default function Utenti({ utente }) {
                       ))}
                     </select>
                   </td>
-                  <td>{formattaData(u.creatoIl)}</td>
+                  <td>{formattaData(u.creato_il)}</td>
                   <td className="azioni-utente">
                     {!seStesso && (
                       <>
                         <button
                           type="button"
                           className="btn-rimanda"
-                          onClick={() => {
-                            revocaUtente(u.id)
-                            ricarica()
+                          onClick={async () => {
+                            await revocaUtente(u.id)
+                            await ricarica()
                           }}
                           title="L'utente non potrà più accedere"
                         >

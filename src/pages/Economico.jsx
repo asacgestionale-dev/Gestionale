@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { caricaLavori, salvaLavori, formattaEuro } from '../data/lavori'
+import { caricaLavori, aggiornaLavoro, formattaEuro } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
 import {
   TIPI_PAGAMENTO,
   MODALITA,
   caricaPagamenti,
-  salvaPagamenti,
+  aggiungiPagamento,
+  eliminaPagamento,
   pagamentiDelLavoro,
   totaleIncassato,
   statoPagamento,
@@ -30,33 +31,42 @@ const NUOVO = { tipo: 'Acconto', importo: '', data: oggiISO(), modalita: 'Bonifi
 
 export default function Economico() {
   const navigate = useNavigate()
-  const [lavori, setLavori] = useState(caricaLavori)
-  const [clienti] = useState(caricaClienti)
-  const [pagamenti, setPagamenti] = useState(caricaPagamenti)
+  const [lavori, setLavori] = useState([])
+  const [clienti, setClienti] = useState([])
+  const [pagamenti, setPagamenti] = useState({})
   const [apertoId, setApertoId] = useState(null)
   const [form, setForm] = useState(NUOVO)
   const [filtro, setFiltro] = useState('Da incassare')
   const { chiedi, dialogo } = useConferma()
+
+  async function ricarica() {
+    const [l, p] = await Promise.all([caricaLavori(), caricaPagamenti()])
+    setLavori(l)
+    setPagamenti(p)
+  }
+
+  useEffect(() => {
+    ricarica()
+    caricaClienti().then(setClienti)
+  }, [])
 
   const nomeCliente = (id) => clienti.find((c) => c.id === id)?.nome || '—'
 
   // ogni lavoro con importo concordato entra qui in automatico
   const conImporto = lavori.filter((l) => (Number(l.importo) || 0) > 0)
 
-  function registra(lavoro) {
+  async function registra(lavoro) {
     const valore = Number(form.importo)
     if (!valore || valore <= 0) return
 
-    const movimento = { ...form, id: 'p' + Date.now(), importo: valore }
-    const next = { ...pagamenti, [lavoro.id]: [...pagamentiDelLavoro(pagamenti, lavoro.id), movimento] }
-    setPagamenti(next)
-    salvaPagamenti(next)
+    await aggiungiPagamento(lavoro.id, { ...form, importo: valore })
+    const aggiornati = await caricaPagamenti()
+    setPagamenti(aggiornati)
 
     // l'incassato del lavoro resta allineato ai movimenti registrati
-    const incassato = totaleIncassato(next, lavoro.id)
-    const lavoriAgg = lavori.map((l) => (l.id === lavoro.id ? { ...l, incassato } : l))
-    setLavori(lavoriAgg)
-    salvaLavori(lavoriAgg)
+    const incassato = totaleIncassato(aggiornati, lavoro.id)
+    setLavori((prev) => prev.map((l) => (l.id === lavoro.id ? { ...l, incassato } : l)))
+    await aggiornaLavoro(lavoro.id, { incassato })
 
     setForm({ ...NUOVO, data: oggiISO() })
   }
@@ -65,16 +75,14 @@ export default function Economico() {
     chiedi({
       titolo: 'Eliminare il movimento?',
       messaggio: `${movimento.tipo} di ${formattaEuro(movimento.importo)} del ${formattaData(movimento.data)}: l'importo verrà scalato dall'incassato del lavoro.`,
-      onConferma: () => {
-        const rimasti = pagamentiDelLavoro(pagamenti, lavoro.id).filter((p) => p.id !== movimento.id)
-        const next = { ...pagamenti, [lavoro.id]: rimasti }
-        setPagamenti(next)
-        salvaPagamenti(next)
+      onConferma: async () => {
+        await eliminaPagamento(movimento.id)
+        const aggiornati = await caricaPagamenti()
+        setPagamenti(aggiornati)
 
-        const incassato = totaleIncassato(next, lavoro.id)
-        const lavoriAgg = lavori.map((l) => (l.id === lavoro.id ? { ...l, incassato } : l))
-        setLavori(lavoriAgg)
-        salvaLavori(lavoriAgg)
+        const incassato = totaleIncassato(aggiornati, lavoro.id)
+        setLavori((prev) => prev.map((l) => (l.id === lavoro.id ? { ...l, incassato } : l)))
+        await aggiornaLavoro(lavoro.id, { incassato })
       },
     })
   }

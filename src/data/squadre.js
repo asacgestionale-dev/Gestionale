@@ -1,3 +1,5 @@
+import { supabase } from '../supabaseClient'
+
 export const SQUADRE_BASE = [
   { id: 't1', nome: 'Squadra 1' },
   { id: 't2', nome: 'Squadra 2' },
@@ -5,9 +7,6 @@ export const SQUADRE_BASE = [
   { id: 't4', nome: 'Squadra 4' },
   { id: 't5', nome: 'Squadra 5' },
 ]
-
-const STORAGE_KEY = 'gestionale-squadre'
-const BLOCCHI_KEY = 'gestionale-squadre-bloccate'
 
 export function oggiISO() {
   return new Date().toISOString().slice(0, 10)
@@ -23,65 +22,48 @@ function composizioneVuota() {
   return Object.fromEntries(SQUADRE_BASE.map((s) => [s.id, []]))
 }
 
-// Squadre "bloccate" col lucchetto: la loro composizione vale per tutte le giornate
-// finché il lucchetto non viene riaperto. { t1: ['Mario', 'Luca'], ... }
-export function caricaBlocchi() {
-  try {
-    return JSON.parse(localStorage.getItem(BLOCCHI_KEY) || '{}')
-  } catch {
-    return {}
-  }
+// Squadre fisse: valgono per ogni giornata finché il lucchetto resta chiuso.
+export async function caricaBlocchi() {
+  const { data } = await supabase.from('squadre_bloccate').select('*')
+  return Object.fromEntries((data || []).map((b) => [b.squadra_id, b.membri || []]))
 }
 
-export function bloccaSquadra(teamId, membri) {
-  try {
-    const blocchi = caricaBlocchi()
-    blocchi[teamId] = membri
-    localStorage.setItem(BLOCCHI_KEY, JSON.stringify(blocchi))
-  } catch {
-    // storage non disponibile: il blocco non viene memorizzato
-  }
+export async function bloccaSquadra(teamId, membri) {
+  await supabase
+    .from('squadre_bloccate')
+    .upsert({ squadra_id: teamId, membri }, { onConflict: 'squadra_id' })
 }
 
-export function sbloccaSquadra(teamId) {
-  try {
-    const blocchi = caricaBlocchi()
-    delete blocchi[teamId]
-    localStorage.setItem(BLOCCHI_KEY, JSON.stringify(blocchi))
-  } catch {
-    // storage non disponibile: il blocco non viene rimosso
-  }
+export async function sbloccaSquadra(teamId) {
+  await supabase.from('squadre_bloccate').delete().eq('squadra_id', teamId)
 }
 
-export function caricaComposizione(data) {
-  let salvata = {}
-  try {
-    const tutte = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    salvata = tutte[data] || {}
-  } catch {
-    salvata = {}
-  }
+export async function caricaComposizione(giorno) {
+  const [{ data }, blocchi] = await Promise.all([
+    supabase.from('squadre').select('squadra_id,membri').eq('giorno', giorno),
+    caricaBlocchi(),
+  ])
+
+  const salvata = Object.fromEntries((data || []).map((r) => [r.squadra_id, r.membri || []]))
   // le squadre col lucchetto chiuso hanno la precedenza sulla composizione del giorno
-  const blocchi = caricaBlocchi()
   return { ...composizioneVuota(), ...salvata, ...blocchi }
 }
 
-export function salvaComposizione(data, composizione) {
-  try {
-    const tutte = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    tutte[data] = composizione
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tutte))
-    // una squadra bloccata resta allineata alle modifiche fatte mentre è chiusa
-    const blocchi = caricaBlocchi()
-    let cambiati = false
-    for (const teamId of Object.keys(blocchi)) {
-      if (composizione[teamId]) {
-        blocchi[teamId] = composizione[teamId]
-        cambiati = true
-      }
-    }
-    if (cambiati) localStorage.setItem(BLOCCHI_KEY, JSON.stringify(blocchi))
-  } catch {
-    // storage non disponibile: la composizione resta solo in memoria
+export async function salvaComposizione(giorno, composizione) {
+  const righe = SQUADRE_BASE.map((s) => ({
+    giorno,
+    squadra_id: s.id,
+    membri: composizione[s.id] || [],
+  }))
+  await supabase.from('squadre').upsert(righe, { onConflict: 'giorno,squadra_id' })
+
+  // una squadra bloccata resta allineata alle modifiche fatte mentre è chiusa
+  const blocchi = await caricaBlocchi()
+  const daAggiornare = Object.keys(blocchi)
+    .filter((teamId) => composizione[teamId])
+    .map((teamId) => ({ squadra_id: teamId, membri: composizione[teamId] }))
+
+  if (daAggiornare.length > 0) {
+    await supabase.from('squadre_bloccate').upsert(daAggiornare, { onConflict: 'squadra_id' })
   }
 }

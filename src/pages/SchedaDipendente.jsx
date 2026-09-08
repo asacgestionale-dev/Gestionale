@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { RUOLI, caricaDipendenti, salvaDipendenti } from '../data/dipendenti'
+import {
+  RUOLI,
+  caricaDipendenti,
+  aggiornaDipendente,
+  eliminaDipendente,
+} from '../data/dipendenti'
 import { caricaTuttePresenze, STATI_PRESENZA } from '../data/presenze'
 import { SQUADRE_BASE, caricaComposizione } from '../data/squadre'
-import { CATEGORIE, caricaDocumenti, salvaDocumento, eliminaDocumento } from '../data/documenti'
+import {
+  CATEGORIE,
+  caricaDocumenti,
+  salvaDocumento,
+  eliminaDocumento,
+  urlDocumento,
+} from '../data/documenti'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
@@ -22,7 +33,7 @@ function formattaPeso(byte) {
 export default function SchedaDipendente() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [dipendenti, setDipendenti] = useState(caricaDipendenti)
+  const [dipendenti, setDipendenti] = useState([])
   const [documenti, setDocumenti] = useState([])
   const [categoria, setCategoria] = useState(CATEGORIE[0])
   const [caricamento, setCaricamento] = useState(false)
@@ -33,16 +44,29 @@ export default function SchedaDipendente() {
   // i documenti dei dipendenti condividono l'archivio con quelli dei clienti: prefisso per distinguerli
   const chiaveDoc = 'dip:' + id
 
+  // storico presenze e composizioni squadra, per i riepiloghi della scheda
+  const [tuttePresenze, setTuttePresenze] = useState({})
+  const [composizioni, setComposizioni] = useState({})
+
   useEffect(() => {
     caricaDocumenti(chiaveDoc).then(setDocumenti)
   }, [chiaveDoc])
 
+  useEffect(() => {
+    caricaDipendenti().then(setDipendenti)
+    caricaTuttePresenze().then(async (tutte) => {
+      setTuttePresenze(tutte)
+      const per = {}
+      for (const giorno of Object.keys(tutte)) per[giorno] = await caricaComposizione(giorno)
+      setComposizioni(per)
+    })
+  }, [])
+
   const dipendente = dipendenti.find((d) => d.id === id)
 
   function aggiorna(patch) {
-    const next = dipendenti.map((d) => (d.id === id ? { ...d, ...patch } : d))
-    setDipendenti(next)
-    salvaDipendenti(next)
+    setDipendenti((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)))
+    aggiornaDipendente(id, patch)
     setSalvato(true)
   }
 
@@ -61,8 +85,8 @@ export default function SchedaDipendente() {
     chiedi({
       titolo: 'Eliminare il dipendente?',
       messaggio: `"${dipendente.nome}" verrà rimosso dall'organico insieme ai documenti allegati.`,
-      onConferma: () => {
-        salvaDipendenti(dipendenti.filter((d) => d.id !== id))
+      onConferma: async () => {
+        await eliminaDipendente(id)
         navigate('/personale')
       },
     })
@@ -91,10 +115,9 @@ export default function SchedaDipendente() {
     })
   }
 
-  function apriDocumento(doc) {
-    const url = URL.createObjectURL(doc.file)
-    window.open(url, '_blank', 'noopener')
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  async function apriDocumento(doc) {
+    const url = await urlDocumento(doc.id)
+    if (url) window.open(url, '_blank', 'noopener')
   }
 
   if (!dipendente) {
@@ -109,7 +132,6 @@ export default function SchedaDipendente() {
   }
 
   // conteggio delle giornate per stato, su tutte le date registrate
-  const tuttePresenze = caricaTuttePresenze()
   const conteggio = Object.fromEntries(STATI_PRESENZA.map((s) => [s, 0]))
   const giornateAssenza = []
   for (const [data, mappa] of Object.entries(tuttePresenze)) {
@@ -122,8 +144,8 @@ export default function SchedaDipendente() {
 
   // squadre in cui è stato inserito, sulle giornate pianificate
   const giornateSquadra = []
-  for (const data of Object.keys(tuttePresenze)) {
-    const comp = caricaComposizione(data)
+  for (const data of Object.keys(composizioni)) {
+    const comp = composizioni[data] || {}
     for (const s of SQUADRE_BASE) {
       const membri = comp[s.id] || []
       const indice = membri.indexOf(dipendente.nome)

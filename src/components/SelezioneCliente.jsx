@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { caricaClienti, salvaClienti } from '../data/clienti'
+import { caricaClienti, aggiungiCliente } from '../data/clienti'
 import InputIndirizzo from './InputIndirizzo'
 import './SelezioneCliente.css'
 
@@ -39,13 +39,12 @@ export default function SelezioneCliente({ clienti, clienteId, onCambia, onClien
     setAperto(false)
   }
 
-  function salvaNuovoCliente(e) {
+  async function salvaNuovoCliente(e) {
     e.preventDefault()
     if (!nuovo.nome.trim()) return
-    const cliente = { ...nuovo, id: 'c' + Date.now() }
-    const lista = [...caricaClienti(), cliente]
-    salvaClienti(lista)
-    onClientiAggiornati(lista)
+    const cliente = await aggiungiCliente(nuovo)
+    if (!cliente) return
+    onClientiAggiornati(await caricaClienti())
     onCambia(cliente.id)
     setTesto(cliente.nome)
     setNuovo(VUOTO)

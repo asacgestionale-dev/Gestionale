@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   caricaLavori,
-  salvaLavori,
+  aggiornaLavoro,
+  eliminaLavoro,
   formattaEuro,
   minutiDaOrario,
   orarioDaMinuti,
@@ -25,20 +26,28 @@ function orarioAssegnato(assegnato) {
 export default function SchedaLavoro() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [lavori, setLavori] = useState(caricaLavori)
-  const [clienti] = useState(caricaClienti)
+  const [lavori, setLavori] = useState([])
+  const [clienti, setClienti] = useState([])
   const [materiale, setMateriale] = useState('')
   const [salvato, setSalvato] = useState(false)
+  const [caricamento, setCaricamento] = useState(true)
   // spostamento dell'appuntamento: nuova data, nuova ora e causale
   const [spostamento, setSpostamento] = useState(null)
   const { chiedi, dialogo } = useConferma()
 
+  useEffect(() => {
+    Promise.all([caricaLavori(), caricaClienti()]).then(([l, c]) => {
+      setLavori(l)
+      setClienti(c)
+      setCaricamento(false)
+    })
+  }, [])
+
   const lavoro = lavori.find((l) => l.id === id)
 
   function aggiorna(patch) {
-    const next = lavori.map((l) => (l.id === id ? { ...l, ...patch } : l))
-    setLavori(next)
-    salvaLavori(next)
+    setLavori((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+    aggiornaLavoro(id, patch)
     setSalvato(true)
   }
 
@@ -94,8 +103,8 @@ export default function SchedaLavoro() {
     chiedi({
       titolo: 'Eliminare il lavoro?',
       messaggio: `"${lavoro.titolo}" verrà rimosso definitivamente, con la sua pianificazione e il consuntivo.`,
-      onConferma: () => {
-        salvaLavori(lavori.filter((l) => l.id !== id))
+      onConferma: async () => {
+        await eliminaLavoro(id)
         navigate('/lavori')
       },
     })
@@ -109,6 +118,8 @@ export default function SchedaLavoro() {
       { enableHighAccuracy: true, timeout: 10000 },
     )
   }
+
+  if (caricamento) return <p className="page-subtitle">Caricamento…</p>
 
   if (!lavoro) {
     return (

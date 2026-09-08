@@ -1,35 +1,39 @@
-const STORAGE_KEY = 'gestionale-dipendenti'
+import { supabase } from '../supabaseClient'
 
 export const RUOLI = ['Operaio', 'Tecnico', 'Preposto', 'Capocantiere', 'Impiegato']
 
-const INIZIALI = Array.from({ length: 15 }, (_, i) => ({
-  id: 'p' + (i + 1),
-  nome: `Dipendente ${i + 1}`,
-  ruolo: 'Operaio',
-  telefono: '',
-  email: '',
-  assunzione: '',
-  qualifiche: [],
-  note: '',
-}))
-
-export function caricaDipendenti() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch {
-    // localStorage non disponibile: si riparte dall'organico di esempio
-  }
-  return INIZIALI
+export async function caricaDipendenti() {
+  const { data } = await supabase.from('dipendenti').select('*').order('nome')
+  return data || []
 }
 
-export function salvaDipendenti(lista) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista))
-  } catch {
-    // spazio storage pieno o non disponibile: i dati restano solo in memoria
-  }
+export async function aggiungiDipendente(d) {
+  const { data } = await supabase
+    .from('dipendenti')
+    .insert({
+      nome: d.nome.trim(),
+      ruolo: d.ruolo || 'Operaio',
+      telefono: d.telefono || '',
+      email: d.email || '',
+      assunzione: d.assunzione || null,
+      qualifiche: [],
+      note: '',
+    })
+    .select()
+    .single()
+  return data
 }
 
-// Squadre e Presenze identificano le persone per nome: qui la lista dei soli nomi.
-export const DIPENDENTI = caricaDipendenti().map((d) => d.nome)
+export async function aggiornaDipendente(id, patch) {
+  await supabase.from('dipendenti').update(patch).eq('id', id)
+}
+
+export async function eliminaDipendente(id) {
+  await supabase.from('dipendenti').delete().eq('id', id)
+}
+
+// Presenze e squadre identificano le persone per nome: qui la sola lista dei nomi.
+export async function nomiDipendenti() {
+  const lista = await caricaDipendenti()
+  return lista.map((d) => d.nome)
+}

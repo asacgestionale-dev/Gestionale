@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { caricaDipendenti } from '../data/dipendenti'
 import {
   CATEGORIE_DPI,
   caricaCatalogoDpi,
-  salvaCatalogoDpi,
+  aggiungiDpi as salvaDpiSuDb,
+  eliminaDpi as eliminaDpiDaDb,
   caricaConsegne,
-  salvaConsegne,
+  aggiungiConsegna,
+  eliminaConsegna as eliminaConsegnaDaDb,
   calcolaScadenza,
   statoConsegna,
 } from '../data/dpi'
@@ -28,23 +30,33 @@ const DPI_VUOTO = { nome: '', categoria: CATEGORIE_DPI[0], norma: '', durataMesi
 const CONSEGNA_VUOTA = { dpiId: '', dipendente: '', taglia: '', dataConsegna: oggiISO(), note: '' }
 
 export default function Dpi() {
-  const [catalogo, setCatalogo] = useState(caricaCatalogoDpi)
-  const [consegne, setConsegne] = useState(caricaConsegne)
-  const [dipendenti] = useState(caricaDipendenti)
+  const [catalogo, setCatalogo] = useState([])
+  const [consegne, setConsegne] = useState([])
+  const [dipendenti, setDipendenti] = useState([])
   const [formDpi, setFormDpi] = useState(DPI_VUOTO)
   const [formConsegna, setFormConsegna] = useState(CONSEGNA_VUOTA)
   const [ricerca, setRicerca] = useState('')
   const [filtro, setFiltro] = useState('Tutte')
   const { chiedi, dialogo } = useConferma()
 
+  async function ricarica() {
+    const [cat, cons] = await Promise.all([caricaCatalogoDpi(), caricaConsegne()])
+    setCatalogo(cat)
+    setConsegne(cons)
+  }
+
+  useEffect(() => {
+    ricarica()
+    caricaDipendenti().then(setDipendenti)
+  }, [])
+
   const nomeDpi = (id) => catalogo.find((d) => d.id === id)?.nome || '—'
 
-  function aggiungiDpi(e) {
+  async function aggiungiDpi(e) {
     e.preventDefault()
     if (!formDpi.nome.trim()) return
-    const next = [...catalogo, { ...formDpi, id: 'd' + Date.now() }]
-    setCatalogo(next)
-    salvaCatalogoDpi(next)
+    await salvaDpiSuDb(formDpi)
+    await ricarica()
     setFormDpi(DPI_VUOTO)
   }
 
@@ -52,26 +64,22 @@ export default function Dpi() {
     chiedi({
       titolo: 'Eliminare il dispositivo?',
       messaggio: `"${dpi.nome}" verrà tolto dal catalogo. Le consegne già registrate restano.`,
-      onConferma: () => {
-        const next = catalogo.filter((d) => d.id !== dpi.id)
-        setCatalogo(next)
-        salvaCatalogoDpi(next)
+      onConferma: async () => {
+        await eliminaDpiDaDb(dpi.id)
+        await ricarica()
       },
     })
   }
 
-  function registraConsegna(e) {
+  async function registraConsegna(e) {
     e.preventDefault()
     if (!formConsegna.dpiId || !formConsegna.dipendente) return
     const dpi = catalogo.find((d) => d.id === formConsegna.dpiId)
-    const consegna = {
+    await aggiungiConsegna({
       ...formConsegna,
-      id: 'c' + Date.now(),
       scadenza: calcolaScadenza(formConsegna.dataConsegna, dpi?.durataMesi),
-    }
-    const next = [...consegne, consegna]
-    setConsegne(next)
-    salvaConsegne(next)
+    })
+    await ricarica()
     setFormConsegna({ ...CONSEGNA_VUOTA, dataConsegna: formConsegna.dataConsegna })
   }
 
@@ -79,10 +87,9 @@ export default function Dpi() {
     chiedi({
       titolo: 'Eliminare la consegna?',
       messaggio: `La consegna di "${nomeDpi(consegna.dpiId)}" a ${consegna.dipendente} verrà rimossa.`,
-      onConferma: () => {
-        const next = consegne.filter((c) => c.id !== consegna.id)
-        setConsegne(next)
-        salvaConsegne(next)
+      onConferma: async () => {
+        await eliminaConsegnaDaDb(consegna.id)
+        await ricarica()
       },
     })
   }

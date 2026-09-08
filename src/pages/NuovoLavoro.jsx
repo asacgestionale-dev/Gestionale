@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { caricaLavori, salvaLavori, nuovoLavoro, minutiDaOrario } from '../data/lavori'
+import { caricaLavori, aggiungiLavoro, minutiDaOrario } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
 import InputIndirizzo from '../components/InputIndirizzo'
 import SelezioneCliente from '../components/SelezioneCliente'
@@ -10,8 +10,13 @@ import './NuovoLavoro.css'
 
 export default function NuovoLavoro() {
   const navigate = useNavigate()
-  const [clienti, setClienti] = useState(caricaClienti)
-  const [jobs, setJobs] = useState(caricaLavori)
+  const [clienti, setClienti] = useState([])
+  const [jobs, setJobs] = useState([])
+
+  useEffect(() => {
+    caricaClienti().then(setClienti)
+    caricaLavori().then(setJobs)
+  }, [])
 
   // nessun cliente preselezionato: si sceglie cercandolo
   const [clienteId, setClienteId] = useState('')
@@ -65,7 +70,7 @@ export default function NuovoLavoro() {
     setMateriali((prev) => prev.filter((_, i) => i !== indice))
   }
 
-  function handleSubmit(e, vaiAllAssegnazione = false) {
+  async function handleSubmit(e, vaiAllAssegnazione = false) {
     e.preventDefault()
 
     const mancanti = []
@@ -82,9 +87,8 @@ export default function NuovoLavoro() {
     const appuntamento = dataAppuntamento
       ? { data: dataAppuntamento, minuti: minutiDaOrario(oraAppuntamento) }
       : null
-    const next = [
-      ...jobs,
-      nuovoLavoro(jobs, {
+    await aggiungiLavoro(
+      {
         titolo,
         durata,
         clienteId,
@@ -94,13 +98,13 @@ export default function NuovoLavoro() {
         posizione,
         importo,
         appuntamento,
-      }),
-    ]
-    setJobs(next)
-    salvaLavori(next)
+      },
+      jobs.length,
+    )
+    setJobs(await caricaLavori())
 
     // il preventivo viene archiviato fra i documenti del cliente
-    if (preventivo) salvaDocumento(clienteId, preventivo, 'Preventivo')
+    if (preventivo) await salvaDocumento(clienteId, preventivo, 'Preventivo')
 
     if (vaiAllAssegnazione || appuntamento) {
       navigate('/assegnazione-lavori')

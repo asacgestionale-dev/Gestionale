@@ -1,42 +1,37 @@
-import { DIPENDENTI } from './dipendenti'
-
-const STORAGE_KEY = 'gestionale-presenze'
+import { supabase } from '../supabaseClient'
+import { nomiDipendenti } from './dipendenti'
 
 export const STATI_PRESENZA = ['Presente', 'Ferie', 'Malattia', 'Permesso']
 
-function presenzeVuote() {
-  return Object.fromEntries(DIPENDENTI.map((nome) => [nome, 'Presente']))
+// Chi non ha una riga per quella giornata risulta presente.
+export async function caricaPresenze(giorno) {
+  const [{ data }, nomi] = await Promise.all([
+    supabase.from('presenze').select('dipendente,stato').eq('giorno', giorno),
+    nomiDipendenti(),
+  ])
+
+  const mappa = Object.fromEntries(nomi.map((n) => [n, 'Presente']))
+  for (const riga of data || []) mappa[riga.dipendente] = riga.stato
+  return mappa
 }
 
-export function caricaPresenze(data) {
-  try {
-    const tutte = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    return { ...presenzeVuote(), ...(tutte[data] || {}) }
-  } catch {
-    return presenzeVuote()
+export async function salvaStato(giorno, dipendente, stato) {
+  await supabase
+    .from('presenze')
+    .upsert({ giorno, dipendente, stato }, { onConflict: 'giorno,dipendente' })
+}
+
+// Tutte le giornate registrate, per i conteggi nella scheda dipendente.
+export async function caricaTuttePresenze() {
+  const { data } = await supabase.from('presenze').select('giorno,dipendente,stato')
+  const per = {}
+  for (const r of data || []) {
+    per[r.giorno] = per[r.giorno] || {}
+    per[r.giorno][r.dipendente] = r.stato
   }
+  return per
 }
 
-// Tutte le giornate registrate: { '2026-08-16': { 'Mario Rossi': 'Ferie', ... }, ... }
-export function caricaTuttePresenze() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-  } catch {
-    return {}
-  }
-}
-
-export function salvaPresenze(data, presenze) {
-  try {
-    const tutte = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    tutte[data] = presenze
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tutte))
-  } catch {
-    // storage non disponibile: le presenze restano solo in memoria
-  }
-}
-
-// Elenco delle date da 'da' a 'a' comprese, in formato ISO.
 export function giorniTra(da, a) {
   const giorni = []
   const cursore = new Date(da)
@@ -48,15 +43,12 @@ export function giorniTra(da, a) {
   return giorni
 }
 
-// Applica lo stesso stato a un dipendente su tutto il periodo indicato.
-export function applicaPeriodo(nome, stato, dataInizio, dataFine) {
-  try {
-    const tutte = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-    for (const giorno of giorniTra(dataInizio, dataFine)) {
-      tutte[giorno] = { ...(tutte[giorno] || {}), [nome]: stato }
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tutte))
-  } catch {
-    // storage non disponibile: il periodo non viene memorizzato
-  }
+// Applica lo stesso stato su tutto il periodo indicato.
+export async function applicaPeriodo(nome, stato, dataInizio, dataFine) {
+  const righe = giorniTra(dataInizio, dataFine).map((giorno) => ({
+    giorno,
+    dipendente: nome,
+    stato,
+  }))
+  await supabase.from('presenze').upsert(righe, { onConflict: 'giorno,dipendente' })
 }

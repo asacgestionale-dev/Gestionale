@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { DIPENDENTI } from '../data/dipendenti'
+import { useEffect, useState } from 'react'
+import { nomiDipendenti } from '../data/dipendenti'
 import {
   SQUADRE_BASE,
   domaniISO,
@@ -15,14 +15,26 @@ import './Presenze.css'
 
 export default function Squadre() {
   const [data, setData] = useState(domaniISO)
-  const [composizione, setComposizione] = useState(() => caricaComposizione(domaniISO()))
-  const [presenze, setPresenze] = useState(() => caricaPresenze(domaniISO()))
-  const [blocchi, setBlocchi] = useState(caricaBlocchi)
+  const [composizione, setComposizione] = useState({})
+  const [presenze, setPresenze] = useState({})
+  const [blocchi, setBlocchi] = useState({})
+  const [DIPENDENTI, setDipendenti] = useState([])
+  // storico presenze, per indicare fino a quando dura un'assenza
+  const [tuttePresenze, setTuttePresenze] = useState({})
+
+  useEffect(() => {
+    nomiDipendenti().then(setDipendenti)
+    caricaBlocchi().then(setBlocchi)
+    caricaTuttePresenze().then(setTuttePresenze)
+  }, [])
+
+  useEffect(() => {
+    caricaComposizione(data).then(setComposizione)
+    caricaPresenze(data).then(setPresenze)
+  }, [data])
 
   function cambiaData(nuovaData) {
     setData(nuovaData)
-    setComposizione(caricaComposizione(nuovaData))
-    setPresenze(caricaPresenze(nuovaData))
   }
 
   function aggiorna(updater) {
@@ -35,7 +47,7 @@ export default function Squadre() {
 
   function rimuoviDaTutte(comp, nome) {
     const next = {}
-    for (const s of SQUADRE_BASE) next[s.id] = comp[s.id].filter((n) => n !== nome)
+    for (const s of SQUADRE_BASE) next[s.id] = (comp[s.id] || []).filter((n) => n !== nome)
     return next
   }
 
@@ -69,13 +81,13 @@ export default function Squadre() {
     cambiaData(d.toISOString().slice(0, 10))
   }
 
-  function cambiaLucchetto(teamId) {
+  async function cambiaLucchetto(teamId) {
     if (blocchi[teamId]) {
-      sbloccaSquadra(teamId)
+      await sbloccaSquadra(teamId)
     } else {
-      bloccaSquadra(teamId, composizione[teamId])
+      await bloccaSquadra(teamId, composizione[teamId] || [])
     }
-    setBlocchi(caricaBlocchi())
+    setBlocchi(await caricaBlocchi())
   }
 
   const assegnati = new Set(Object.values(composizione).flat())
@@ -83,7 +95,7 @@ export default function Squadre() {
 
   // ultimo giorno consecutivo con lo stesso motivo di assenza, per mostrare "fino al ..."
   function fineAssenza(nome, stato) {
-    const tutte = caricaTuttePresenze()
+    const tutte = tuttePresenze
     const cursore = new Date(data)
     let ultimo = data
     for (;;) {
@@ -155,7 +167,7 @@ export default function Squadre() {
               <p className="person-list-empty">Tutti assegnati a una squadra.</p>
             )}
             {nonAssegnati.map((nome) => {
-              const assente = presenze[nome] !== 'Presente'
+              const assente = presenze[nome] && presenze[nome] !== 'Presente'
               return (
                 <div
                   key={nome}
@@ -204,11 +216,11 @@ export default function Squadre() {
               </div>
               {blocchi[team.id] && <span className="squadra-fissa-nota">Squadra fissa</span>}
               <div className="squadra-drop-zone">
-                {composizione[team.id].length === 0 && (
+                {(composizione[team.id] || []).length === 0 && (
                   <p className="squadra-empty">Trascina qui una persona</p>
                 )}
-                {composizione[team.id].map((nome, indice) => {
-                  const assente = presenze[nome] !== 'Presente'
+                {(composizione[team.id] || []).map((nome, indice) => {
+                  const assente = presenze[nome] && presenze[nome] !== 'Presente'
                   return (
                     <div
                       key={nome}

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { caricaLavori, salvaLavori, formattaEuro } from '../data/lavori'
+import { caricaLavori, aggiornaLavoro, formattaEuro } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
 import { SQUADRE_BASE, oggiISO, caricaComposizione } from '../data/squadre'
 import {
@@ -29,12 +29,29 @@ function formattaData(iso) {
 
 export default function Consuntivazione() {
   const navigate = useNavigate()
-  const [lavori, setLavori] = useState(caricaLavori)
-  const [clienti] = useState(caricaClienti)
+  const [lavori, setLavori] = useState([])
+  const [clienti, setClienti] = useState([])
+  const [composizioni, setComposizioni] = useState({})
   const [apertoId, setApertoId] = useState(null)
   const [filtro, setFiltro] = useState('Aperti')
   const [materiale, setMateriale] = useState('')
   const [motivo, setMotivo] = useState('')
+
+  useEffect(() => {
+    caricaClienti().then(setClienti)
+    caricaLavori().then(async (elenco) => {
+      setLavori(elenco)
+      // composizione delle squadre nei giorni in cui i lavori erano pianificati
+      const giorni = [
+        ...new Set(
+          elenco.filter((l) => l.assegnato?.teamId).map((l) => l.assegnato.data || oggiISO()),
+        ),
+      ]
+      const per = {}
+      for (const g of giorni) per[g] = await caricaComposizione(g)
+      setComposizioni(per)
+    })
+  }, [])
 
   const nomeCliente = (id) => clienti.find((c) => c.id === id)?.nome || '—'
   const nomeSquadra = (id) => SQUADRE_BASE.find((s) => s.id === id)?.nome || '—'
@@ -43,13 +60,12 @@ export default function Consuntivazione() {
   function membriDelLavoro(lavoro) {
     if (!lavoro.assegnato?.teamId) return []
     const giorno = lavoro.assegnato.data || oggiISO()
-    return caricaComposizione(giorno)[lavoro.assegnato.teamId] || []
+    return composizioni[giorno]?.[lavoro.assegnato.teamId] || []
   }
 
   function aggiorna(id, patch) {
-    const next = lavori.map((l) => (l.id === id ? { ...l, ...patch } : l))
-    setLavori(next)
-    salvaLavori(next)
+    setLavori((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)))
+    aggiornaLavoro(id, patch)
   }
 
   function aggiornaConsuntivo(lavoro, patch) {

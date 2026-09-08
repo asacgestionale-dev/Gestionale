@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { caricaClienti } from '../data/clienti'
-import { caricaLavori, salvaLavori, formattaEuro } from '../data/lavori'
-import { CATEGORIE, caricaDocumenti, salvaDocumento, eliminaDocumento } from '../data/documenti'
+import { caricaLavori, aggiornaLavoro as salvaLavoroSuDb, formattaEuro } from '../data/lavori'
+import {
+  CATEGORIE,
+  caricaDocumenti,
+  salvaDocumento,
+  eliminaDocumento,
+  urlDocumento,
+} from '../data/documenti'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
@@ -20,12 +26,17 @@ function formattaPeso(byte) {
 
 export default function SchedaCliente() {
   const { id } = useParams()
-  const [clienti] = useState(caricaClienti)
-  const [lavori, setLavori] = useState(caricaLavori)
+  const [clienti, setClienti] = useState([])
+  const [lavori, setLavori] = useState([])
   const [documenti, setDocumenti] = useState([])
   const [categoria, setCategoria] = useState(CATEGORIE[0])
   const [caricamento, setCaricamento] = useState(false)
   const { chiedi, dialogo } = useConferma()
+
+  useEffect(() => {
+    caricaClienti().then(setClienti)
+    caricaLavori().then(setLavori)
+  }, [])
 
   useEffect(() => {
     caricaDocumenti(id).then(setDocumenti)
@@ -48,9 +59,8 @@ export default function SchedaCliente() {
   const materiali = Object.entries(conteggioMateriali).sort((a, b) => b[1] - a[1])
 
   function aggiornaLavoro(lavoroId, patch) {
-    const next = lavori.map((l) => (l.id === lavoroId ? { ...l, ...patch } : l))
-    setLavori(next)
-    salvaLavori(next)
+    setLavori((prev) => prev.map((l) => (l.id === lavoroId ? { ...l, ...patch } : l)))
+    salvaLavoroSuDb(lavoroId, patch)
   }
 
   async function handleUpload(e) {
@@ -76,10 +86,9 @@ export default function SchedaCliente() {
     })
   }
 
-  function apriDocumento(doc) {
-    const url = URL.createObjectURL(doc.file)
-    window.open(url, '_blank', 'noopener')
-    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  async function apriDocumento(doc) {
+    const url = await urlDocumento(doc.id)
+    if (url) window.open(url, '_blank', 'noopener')
   }
 
   if (!cliente) {

@@ -1,26 +1,37 @@
-// Gestione economica dei lavori: l'importo concordato arriva dal lavoro,
-// qui si registrano acconti, stati avanzamento (SAL) e saldo.
+import { supabase } from '../supabaseClient'
 
 export const TIPI_PAGAMENTO = ['Acconto', 'SAL', 'Saldo']
 export const MODALITA = ['Bonifico', 'Contanti', 'Assegno', 'Altro']
 
-const STORAGE_KEY = 'gestionale-pagamenti'
-
-// { idLavoro: [ { id, tipo, importo, data, modalita, note } ] }
-export function caricaPagamenti() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
-  } catch {
-    return {}
+// { idLavoro: [ movimenti ] }
+export async function caricaPagamenti() {
+  const { data } = await supabase.from('pagamenti').select('*').order('data')
+  const per = {}
+  for (const p of data || []) {
+    per[p.lavoro_id] = per[p.lavoro_id] || []
+    per[p.lavoro_id].push(p)
   }
+  return per
 }
 
-export function salvaPagamenti(mappa) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mappa))
-  } catch {
-    // storage non disponibile: i movimenti restano solo in memoria
-  }
+export async function aggiungiPagamento(lavoroId, movimento) {
+  const { data } = await supabase
+    .from('pagamenti')
+    .insert({
+      lavoro_id: lavoroId,
+      tipo: movimento.tipo,
+      importo: Number(movimento.importo) || 0,
+      data: movimento.data,
+      modalita: movimento.modalita,
+      note: movimento.note || '',
+    })
+    .select()
+    .single()
+  return data
+}
+
+export async function eliminaPagamento(id) {
+  await supabase.from('pagamenti').delete().eq('id', id)
 }
 
 export function pagamentiDelLavoro(mappa, idLavoro) {

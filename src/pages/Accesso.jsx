@@ -1,11 +1,5 @@
 import { useState } from 'react'
-import {
-  RUOLI_UTENTE,
-  accedi,
-  registra,
-  apriSessione,
-  ciSonoUtenti,
-} from '../data/auth'
+import { RUOLI_UTENTE, accedi, registra } from '../data/auth'
 import './Accesso.css'
 
 export default function Accesso({ onAccesso }) {
@@ -20,8 +14,6 @@ export default function Accesso({ onAccesso }) {
   const [attesa, setAttesa] = useState(false)
   // registrazione andata a buon fine ma in attesa dell'amministratore
   const [inAttesaApprovazione, setInAttesaApprovazione] = useState(false)
-
-  const primoAccount = !ciSonoUtenti()
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -41,7 +33,7 @@ export default function Accesso({ onAccesso }) {
 
       // solo il primo account (amministratore) entra subito
       if (esito.inAttesa) {
-        setInAttesaApprovazione(true)
+        setInAttesaApprovazione(esito.confermaEmail ? 'email' : true)
         setModo('accesso')
         setPassword('')
         setConferma('')
@@ -49,7 +41,6 @@ export default function Accesso({ onAccesso }) {
         return
       }
 
-      apriSessione(esito.utente)
       onAccesso(esito.utente)
       return
     }
@@ -59,7 +50,6 @@ export default function Accesso({ onAccesso }) {
     const esito = await accedi(email, password)
     setAttesa(false)
     if (esito.errore) return setErrore(esito.errore)
-    apriSessione(esito.utente)
     onAccesso(esito.utente)
   }
 
@@ -70,9 +60,7 @@ export default function Accesso({ onAccesso }) {
         <h1 className="accesso-titolo">Gestionale</h1>
         <p className="accesso-sotto">
           {modo === 'registrazione'
-            ? primoAccount
-              ? 'Primo avvio: chi si registra ora diventa amministratore'
-              : 'Crea il tuo account: l’amministratore dovrà approvarlo'
+            ? 'Crea il tuo account: l’amministratore dovrà approvarlo'
             : 'Accedi con le tue credenziali'}
         </p>
 
@@ -118,25 +106,22 @@ export default function Accesso({ onAccesso }) {
                 autoComplete="new-password"
               />
 
-              {!primoAccount && (
-                <>
-                  <label className="accesso-label">Ruolo</label>
-                  <select value={ruolo} onChange={(e) => setRuolo(e.target.value)}>
-                    {RUOLI_UTENTE.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
+              <label className="accesso-label">Ruolo</label>
+              <select value={ruolo} onChange={(e) => setRuolo(e.target.value)}>
+                {RUOLI_UTENTE.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </>
           )}
 
           {inAttesaApprovazione && (
             <p className="accesso-attesa">
-              Registrazione inviata. Potrai accedere quando l'amministratore avrà approvato il tuo
-              account.
+              {inAttesaApprovazione === 'email'
+                ? 'Registrazione inviata. Conferma il tuo indirizzo dal messaggio che hai ricevuto, poi attendi l’approvazione dell’amministratore.'
+                : "Registrazione inviata. Potrai accedere quando l'amministratore avrà approvato il tuo account."}
             </p>
           )}
           {errore && <p className="accesso-errore">{errore}</p>}
@@ -162,8 +147,7 @@ export default function Accesso({ onAccesso }) {
         </button>
 
         <p className="accesso-nota">
-          Le credenziali restano su questo computer: quando i dati usciranno da qui servirà un
-          server per gestirle davvero.
+          Il primo account registrato è amministratore e può approvare gli altri.
         </p>
       </div>
     </div>

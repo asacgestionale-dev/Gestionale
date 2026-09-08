@@ -1,6 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RUOLI, caricaDipendenti, salvaDipendenti } from '../data/dipendenti'
+import {
+  RUOLI,
+  caricaDipendenti,
+  aggiungiDipendente,
+  eliminaDipendente,
+} from '../data/dipendenti'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
@@ -9,21 +14,28 @@ const VUOTO = { nome: '', ruolo: RUOLI[0], telefono: '', email: '', assunzione: 
 
 export default function Personale() {
   const navigate = useNavigate()
-  const [dipendenti, setDipendenti] = useState(caricaDipendenti)
+  const [dipendenti, setDipendenti] = useState([])
   const [form, setForm] = useState(VUOTO)
   const [ricerca, setRicerca] = useState('')
   const { chiedi, dialogo } = useConferma()
+
+  async function ricarica() {
+    setDipendenti(await caricaDipendenti())
+  }
+
+  useEffect(() => {
+    ricarica()
+  }, [])
 
   function aggiorna(campo, valore) {
     setForm((prev) => ({ ...prev, [campo]: valore }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.nome.trim()) return
-    const next = [...dipendenti, { ...form, id: 'p' + Date.now(), qualifiche: [], note: '' }]
-    setDipendenti(next)
-    salvaDipendenti(next)
+    await aggiungiDipendente(form)
+    await ricarica()
     setForm(VUOTO)
   }
 
@@ -32,10 +44,9 @@ export default function Personale() {
     chiedi({
       titolo: 'Eliminare il dipendente?',
       messaggio: `"${dipendente.nome}" verrà rimosso dall'organico. Presenze e squadre già registrate restano invariate.`,
-      onConferma: () => {
-        const next = dipendenti.filter((d) => d.id !== dipendente.id)
-        setDipendenti(next)
-        salvaDipendenti(next)
+      onConferma: async () => {
+        await eliminaDipendente(dipendente.id)
+        await ricarica()
       },
     })
   }
