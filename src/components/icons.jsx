@@ -142,3 +142,13 @@ export const IconGroups = (p) => (
     <rect x="13.5" y="13.5" width="7" height="7" rx="1.8" />
   </svg>
 )
+
+export const IconFurgone = (p) => (
+  <svg {...base} {...p}>
+    <path d="M2.5 16.5V7.5a1 1 0 0 1 1-1h9v10" />
+    <path d="M12.5 9.5h3.6l2.9 3.4v3.6" />
+    <path d="M2.5 16.5h1.6M9.9 16.5h4.2M19.9 16.5h1.6" />
+    <circle cx="6.8" cy="17" r="1.8" />
+    <circle cx="17.2" cy="17" r="1.8" />
+  </svg>
+)

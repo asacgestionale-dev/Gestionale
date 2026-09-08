@@ -164,6 +164,36 @@ create table if not exists dpi_consegne (
   note text default ''
 );
 
+create table if not exists mezzi (
+  id uuid primary key default gen_random_uuid(),
+  targa text not null unique,
+  tipo text default 'Furgone',
+  marca text default '',
+  modello text default '',
+  anno integer,
+  carburante text default '',
+  km integer default 0,
+  assegnato_a text default '',
+  assicurazione date,
+  revisione date,
+  bollo date,
+  tagliando date,
+  in_servizio boolean default true,
+  note text default '',
+  creato_il timestamptz default now()
+);
+
+create table if not exists mezzi_interventi (
+  id uuid primary key default gen_random_uuid(),
+  mezzo_id uuid references mezzi on delete cascade,
+  tipo text default 'Riparazione',
+  data date not null default current_date,
+  km integer default 0,
+  costo numeric default 0,
+  officina text default '',
+  note text default ''
+);
+
 -- ---------------------------------------------------------------
 -- Row Level Security: nessun accesso senza account approvato
 -- ---------------------------------------------------------------
@@ -177,6 +207,8 @@ alter table squadre_bloccate enable row level security;
 alter table pagamenti enable row level security;
 alter table dpi enable row level security;
 alter table dpi_consegne enable row level security;
+alter table mezzi enable row level security;
+alter table mezzi_interventi enable row level security;
 
 -- Profili: ognuno vede il proprio, l'amministratore vede e gestisce tutti
 drop policy if exists "profilo proprio" on profili;
@@ -198,7 +230,8 @@ declare
 begin
   foreach t in array array[
     'clienti','dipendenti','lavori','presenze','squadre',
-    'squadre_bloccate','pagamenti','dpi','dpi_consegne'
+    'squadre_bloccate','pagamenti','dpi','dpi_consegne',
+    'mezzi','mezzi_interventi'
   ]
   loop
     execute format('drop policy if exists "accesso approvato" on %I', t);

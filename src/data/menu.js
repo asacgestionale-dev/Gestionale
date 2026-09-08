@@ -10,6 +10,7 @@ import {
   IconCheckList,
   IconEuro,
   IconElmetto,
+  IconFurgone,
 } from '../components/icons'
 
 // Voci del gestionale, raggruppate come nella barra laterale.
@@ -40,6 +41,12 @@ export const SEZIONI = [
         titolo: 'Anagrafica DPI',
         desc: 'Dispositivi di protezione e scadenze',
         icon: IconElmetto,
+      },
+      {
+        to: '/autoparco',
+        titolo: 'Autoparco',
+        desc: 'Mezzi, scadenze e manutenzioni',
+        icon: IconFurgone,
       },
     ],
   },
@@ -105,6 +112,7 @@ const PREDEFINITI = [
   '/presenze',
   '/squadre',
   '/dpi',
+  '/autoparco',
   '/nuovo-lavoro',
   '/assegnazione-lavori',
   '/consuntivazione',

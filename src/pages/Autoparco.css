@@ -1,0 +1,37 @@
+.autoparco-scadenze-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.targa-cella {
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  white-space: nowrap;
+}
+
+/* la data della scadenza si colora come il suo stato: si legge a colpo d'occhio */
+.scadenza-data {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.scadenza-data.badge-malattia {
+  color: #c0392b;
+}
+
+.scadenza-data.badge-permesso {
+  color: #b7791f;
+}
+
+.scadenza-data.badge-da-fare {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.autoparco-azioni {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}

@@ -20,6 +20,7 @@ import SchedaLavoro from './pages/SchedaLavoro'
 import Presenze from './pages/Presenze'
 import Squadre from './pages/Squadre'
 import Dpi from './pages/Dpi'
+import Autoparco from './pages/Autoparco'
 
 function App() {
   const [utente, setUtente] = useState(null)
@@ -49,6 +50,7 @@ function App() {
         <Route path="personale/:id" element={<SchedaDipendente />} />
         <Route path="squadre" element={<Squadre />} />
         <Route path="dpi" element={<Dpi />} />
+        <Route path="autoparco" element={<Autoparco />} />
         <Route path="nuovo-lavoro" element={<NuovoLavoro />} />
         <Route path="consuntivazione" element={<Consuntivazione />} />
         <Route path="economico" element={<Economico />} />
