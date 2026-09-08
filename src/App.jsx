@@ -21,8 +21,10 @@ import Presenze from './pages/Presenze'
 import Squadre from './pages/Squadre'
 import Dpi from './pages/Dpi'
 import Autoparco from './pages/Autoparco'
+import AppOperai from './operai/AppOperai'
 
-function App() {
+// Il gestionale dell'ufficio: barra laterale, dashboard e tutte le pagine.
+function Ufficio() {
   const [utente, setUtente] = useState(null)
   const [verifica, setVerifica] = useState(true)
 
@@ -61,6 +63,17 @@ function App() {
         <Route path="utenti" element={<Utenti utente={utente} />} />
         <Route path="impostazioni" element={<Impostazioni />} />
       </Route>
+    </Routes>
+  )
+}
+
+// Due interfacce sullo stesso archivio: /operai è quella per il telefono
+// degli operai, tutto il resto è il gestionale dell'ufficio.
+function App() {
+  return (
+    <Routes>
+      <Route path="/operai/*" element={<AppOperai />} />
+      <Route path="/*" element={<Ufficio />} />
     </Routes>
   )
 }

@@ -14,6 +14,14 @@ import {
   eliminaDocumento,
   urlDocumento,
 } from '../data/documenti'
+import {
+  ENTRATA,
+  USCITA,
+  timbratureDelGiorno,
+  oraDi,
+  minutiLavorati,
+  formattaDurata,
+} from '../data/timbrature'
 import { useConferma } from '../components/useConferma'
 import './Presenze.css'
 
@@ -118,6 +126,30 @@ export default function Presenze() {
       },
     })
   }
+
+  // timbrature inviate dagli operai, raggruppate per persona
+  const [timbrature, setTimbrature] = useState([])
+
+  useEffect(() => {
+    timbratureDelGiorno(data).then(setTimbrature)
+  }, [data])
+
+  const righeTimbrature = Object.entries(
+    timbrature.reduce((acc, t) => {
+      acc[t.dipendente] = [...(acc[t.dipendente] || []), t]
+      return acc
+    }, {}),
+  )
+    .map(([nome, righe]) => ({
+      nome,
+      timbrature: righe,
+      entrata: righe.find((t) => t.tipo === ENTRATA) ? oraDi(righe.find((t) => t.tipo === ENTRATA)) : '',
+      uscita: [...righe].reverse().find((t) => t.tipo === USCITA)
+        ? oraDi([...righe].reverse().find((t) => t.tipo === USCITA))
+        : '',
+      minuti: minutiLavorati(righe),
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
 
   async function apriCertificato(doc) {
     const url = await urlDocumento(doc.id)
@@ -268,6 +300,43 @@ export default function Presenze() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="card sezione">
+        <span className="job-list-label">
+          Timbrature dal telefono ({righeTimbrature.length})
+        </span>
+        {righeTimbrature.length === 0 ? (
+          <p className="job-list-empty">
+            Nessuna timbratura registrata in questa giornata: le inviano gli operai
+            dall'applicazione sul telefono.
+          </p>
+        ) : (
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Dipendente</th>
+                <th>Entrata</th>
+                <th>Uscita</th>
+                <th>Ore</th>
+                <th>Timbrature</th>
+              </tr>
+            </thead>
+            <tbody>
+              {righeTimbrature.map((r) => (
+                <tr key={r.nome}>
+                  <td className="cliente-nome-link">{r.nome}</td>
+                  <td>{r.entrata || '—'}</td>
+                  <td>{r.uscita || '—'}</td>
+                  <td>{formattaDurata(r.minuti)}</td>
+                  <td>
+                    {r.timbrature.map((t) => `${t.tipo[0]} ${oraDi(t)}`).join(' · ')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {dialogo}
