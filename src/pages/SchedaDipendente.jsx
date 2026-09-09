@@ -15,6 +15,7 @@ import {
   eliminaDocumento,
   urlDocumento,
 } from '../data/documenti'
+import { FERIE_ANNUE_PREDEFINITE, situazioneFerie } from '../data/ferie'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
@@ -63,6 +64,16 @@ export default function SchedaDipendente() {
   }, [])
 
   const dipendente = dipendenti.find((d) => d.id === id)
+
+  // quadro ferie: spettanti, godute e richieste ancora in attesa
+  const [ferie, setFerie] = useState(null)
+
+  useEffect(() => {
+    if (!dipendente) return
+    situazioneFerie(dipendente.nome, dipendente.ferie_annue ?? FERIE_ANNUE_PREDEFINITE).then(
+      setFerie,
+    )
+  }, [dipendente?.nome, dipendente?.ferie_annue])
 
   function aggiorna(patch) {
     setDipendenti((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)))
@@ -229,6 +240,24 @@ export default function SchedaDipendente() {
               value={dipendente.assunzione || ''}
               onChange={(e) => aggiorna({ assunzione: e.target.value })}
             />
+
+            <label className="job-form-label">
+              Giorni di ferie all'anno
+              {ferie && ` — residui ${ferie.residue}`}
+            </label>
+            <input
+              type="number"
+              min="0"
+              max="60"
+              value={dipendente.ferie_annue ?? FERIE_ANNUE_PREDEFINITE}
+              onChange={(e) => aggiorna({ ferie_annue: Number(e.target.value) || 0 })}
+            />
+            {ferie && (
+              <p className="riga-sub">
+                Quest'anno: {ferie.godute} godute, {ferie.inAttesa} in attesa di approvazione,{' '}
+                {ferie.permessi} giorni di permesso.
+              </p>
+            )}
           </div>
 
           <div className="form-colonna">

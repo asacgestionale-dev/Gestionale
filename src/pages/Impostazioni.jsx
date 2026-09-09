@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { TEMI, caricaTema, applicaTema } from '../data/tema'
 import { cambiaPassword } from '../data/auth'
+import ZoneTimbratura from './ZoneTimbratura'
 import './NuovoLavoro.css'
+import './SchedaCliente.css'
 import './Impostazioni.css'
 
-export default function Impostazioni() {
+export default function Impostazioni({ utente }) {
   const [tema, setTema] = useState(caricaTema)
 
   const [attuale, setAttuale] = useState('')
@@ -78,6 +80,8 @@ export default function Impostazioni() {
           ))}
         </div>
       </div>
+
+      <ZoneTimbratura amministratore={utente?.ruolo === 'Amministratore'} />
 
       <div className="card sezione-impostazione">
         <div className="impostazione-riga">

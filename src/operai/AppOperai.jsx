@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { accedi, registra, esci, utenteCorrente } from '../data/auth'
 import Timbratura from './Timbratura'
 import LavoriDelGiorno from './LavoriDelGiorno'
+import Ferie from './Ferie'
 import './Operai.css'
 
 const IconaLavori = () => (
@@ -16,6 +17,14 @@ const IconaTimbra = () => (
   <svg viewBox="0 0 24 24">
     <circle cx="12" cy="12" r="8.5" />
     <path d="M12 7.5V12l3 2" />
+  </svg>
+)
+
+const IconaFerie = () => (
+  <svg viewBox="0 0 24 24">
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+    <path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" />
+    <path d="m9 14.5 2 2 4-4" />
   </svg>
 )
 
@@ -172,11 +181,11 @@ export default function AppOperai() {
       </header>
 
       <main className="op-corpo">
-        {tab === 'lavori' ? (
+        {tab === 'lavori' && (
           <LavoriDelGiorno dipendente={utente.nome} onNumeroLavori={contaLavori} />
-        ) : (
-          <Timbratura dipendente={utente.nome} />
         )}
+        {tab === 'timbra' && <Timbratura dipendente={utente.nome} />}
+        {tab === 'ferie' && <Ferie dipendente={utente.nome} />}
       </main>
 
       <nav className="op-tabbar">
@@ -198,6 +207,14 @@ export default function AppOperai() {
         >
           <IconaTimbra />
           Timbra
+        </button>
+        <button
+          type="button"
+          className={tab === 'ferie' ? 'scelto' : ''}
+          onClick={() => setTab('ferie')}
+        >
+          <IconaFerie />
+          Ferie
         </button>
       </nav>
     </div>

@@ -151,3 +151,98 @@
 .password-form button {
   height: 40px;
 }
+
+/* ---- zone valide per la timbratura ---- */
+
+.zone-riga-controllo {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.zone-raggio {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.zone-raggio input {
+  width: 120px;
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.zone-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.zone-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.zone-campo.zone-campo-largo {
+  flex: 2;
+  min-width: 220px;
+}
+
+.zone-campo.zone-campo-stretto {
+  flex: 0 0 130px;
+  min-width: 130px;
+}
+
+.zone-campo input {
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  width: 100%;
+}
+
+.zone-campo input:focus {
+  border-color: var(--accent-2);
+}
+
+.zone-form > button {
+  height: 38px;
+  padding: 0 18px;
+  flex-shrink: 0;
+}
+
+.zone-form .zone-gps {
+  margin: 0;
+}
+
+.zone-mappa {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--accent-text);
+}
+
+@media (max-width: 900px) {
+  .zone-form > button {
+    flex: 1 1 100%;
+  }
+}

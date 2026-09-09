@@ -22,10 +22,23 @@ import {
   minutiLavorati,
   formattaDurata,
 } from '../data/timbrature'
+import {
+  IN_ATTESA,
+  caricaRichieste,
+  approvaRichiesta,
+  rifiutaRichiesta,
+  giorniRichiesti,
+} from '../data/ferie'
+import { formattaDistanza } from '../data/impostazioni'
 import { useConferma } from '../components/useConferma'
 import './Presenze.css'
 
-export default function Presenze() {
+function formattaDataBreve(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' })
+}
+
+export default function Presenze({ utente }) {
   const [data, setData] = useState(oggiISO)
   const [presenze, setPresenze] = useState({})
   const [DIPENDENTI, setDipendenti] = useState([])
@@ -127,6 +140,40 @@ export default function Presenze() {
     })
   }
 
+  // richieste di ferie e permessi arrivate dai telefoni
+  const [richieste, setRichieste] = useState([])
+  const [rifiuto, setRifiuto] = useState(null)
+
+  async function ricaricaRichieste() {
+    setRichieste(await caricaRichieste())
+  }
+
+  useEffect(() => {
+    ricaricaRichieste()
+  }, [])
+
+  const inAttesa = richieste.filter((r) => r.stato === IN_ATTESA)
+  const decise = richieste.filter((r) => r.stato !== IN_ATTESA).slice(0, 10)
+
+  function approva(richiesta) {
+    chiedi({
+      titolo: 'Approvare la richiesta?',
+      messaggio: `${richiesta.dipendente} risulterà in ${richiesta.tipo.toLowerCase()} dal ${formattaDataBreve(richiesta.dataInizio)} al ${formattaDataBreve(richiesta.dataFine)}: le giornate finiscono subito nelle presenze e nelle squadre.`,
+      testoConferma: 'Approva',
+      onConferma: async () => {
+        await approvaRichiesta(richiesta, utente?.nome)
+        await ricaricaRichieste()
+        setPresenze(await caricaPresenze(data))
+      },
+    })
+  }
+
+  async function confermaRifiuto() {
+    await rifiutaRichiesta(rifiuto.richiesta, utente?.nome, rifiuto.motivo)
+    setRifiuto(null)
+    await ricaricaRichieste()
+  }
+
   // timbrature inviate dagli operai, raggruppate per persona
   const [timbrature, setTimbrature] = useState([])
 
@@ -148,6 +195,11 @@ export default function Presenze() {
         ? oraDi([...righe].reverse().find((t) => t.tipo === USCITA))
         : '',
       minuti: minutiLavorati(righe),
+      fuoriZona: righe.some((t) => !t.valida),
+      dettaglioZona: righe
+        .filter((t) => !t.valida)
+        .map((t) => `${t.tipo} ${oraDi(t)}: ${formattaDistanza(t.distanza)} dalla zona`)
+        .join(' · '),
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome))
 
@@ -303,6 +355,123 @@ export default function Presenze() {
       </div>
 
       <div className="card sezione">
+        <span className="job-list-label">Richieste da approvare ({inAttesa.length})</span>
+        {inAttesa.length === 0 ? (
+          <p className="job-list-empty">
+            Nessuna richiesta in attesa: le inviano gli operai dal telefono.
+          </p>
+        ) : (
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Dipendente</th>
+                <th>Tipo</th>
+                <th>Periodo</th>
+                <th>Giorni</th>
+                <th>Motivo</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {inAttesa.map((r) => (
+                <tr key={r.id}>
+                  <td className="cliente-nome-link">{r.dipendente}</td>
+                  <td>
+                    <span
+                      className={'badge ' + (r.tipo === 'Ferie' ? 'badge-ferie' : 'badge-permesso')}
+                    >
+                      {r.tipo}
+                    </span>
+                  </td>
+                  <td>
+                    {formattaDataBreve(r.dataInizio)}
+                    {r.dataFine !== r.dataInizio && ` → ${formattaDataBreve(r.dataFine)}`}
+                  </td>
+                  <td>{giorniRichiesti(r)}</td>
+                  <td>{r.note || '—'}</td>
+                  <td className="richiesta-azioni">
+                    <button type="button" className="btn-approva" onClick={() => approva(r)}>
+                      Approva
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-rifiuta"
+                      onClick={() => setRifiuto({ richiesta: r, motivo: '' })}
+                    >
+                      Rifiuta
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        {rifiuto && (
+          <div className="rifiuto-box">
+            <label className="job-form-label">
+              Perché rifiuti la richiesta di {rifiuto.richiesta.dipendente}?
+            </label>
+            <div className="rifiuto-riga">
+              <input
+                type="text"
+                placeholder="Il motivo lo legge l'operaio sul telefono"
+                value={rifiuto.motivo}
+                onChange={(e) => setRifiuto({ ...rifiuto, motivo: e.target.value })}
+              />
+              <button type="button" className="btn-rifiuta" onClick={confermaRifiuto}>
+                Conferma rifiuto
+              </button>
+              <button type="button" className="btn-approva" onClick={() => setRifiuto(null)}>
+                Annulla
+              </button>
+            </div>
+          </div>
+        )}
+
+        {decise.length > 0 && (
+          <>
+            <span className="job-list-label richieste-decise">Ultime richieste decise</span>
+            <table className="task-table">
+              <thead>
+                <tr>
+                  <th>Dipendente</th>
+                  <th>Tipo</th>
+                  <th>Periodo</th>
+                  <th>Esito</th>
+                  <th>Deciso da</th>
+                </tr>
+              </thead>
+              <tbody>
+                {decise.map((r) => (
+                  <tr key={r.id}>
+                    <td className="cliente-nome-link">{r.dipendente}</td>
+                    <td>{r.tipo}</td>
+                    <td>
+                      {formattaDataBreve(r.dataInizio)}
+                      {r.dataFine !== r.dataInizio && ` → ${formattaDataBreve(r.dataFine)}`}
+                    </td>
+                    <td>
+                      <span
+                        className={
+                          'badge ' +
+                          (r.stato === 'Approvata' ? 'badge-completato' : 'badge-malattia')
+                        }
+                      >
+                        {r.stato}
+                      </span>
+                      {r.motivoRifiuto && <span className="riga-sub">{r.motivoRifiuto}</span>}
+                    </td>
+                    <td>{r.decisaDa || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+
+      <div className="card sezione">
         <span className="job-list-label">
           Timbrature dal telefono ({righeTimbrature.length})
         </span>
@@ -320,6 +489,7 @@ export default function Presenze() {
                 <th>Uscita</th>
                 <th>Ore</th>
                 <th>Timbrature</th>
+                <th>Zona</th>
               </tr>
             </thead>
             <tbody>
@@ -330,7 +500,20 @@ export default function Presenze() {
                   <td>{r.uscita || '—'}</td>
                   <td>{formattaDurata(r.minuti)}</td>
                   <td>
-                    {r.timbrature.map((t) => `${t.tipo[0]} ${oraDi(t)}`).join(' · ')}
+                    {r.timbrature.map((t) => (
+                      <span key={t.id} className={t.valida ? undefined : 'timbratura-sospetta'}>
+                        {t.tipo[0]} {oraDi(t)}{' '}
+                      </span>
+                    ))}
+                  </td>
+                  <td>
+                    {r.fuoriZona ? (
+                      <span className="badge badge-malattia" title={r.dettaglioZona}>
+                        Fuori zona
+                      </span>
+                    ) : (
+                      <span className="badge badge-completato">In zona</span>
+                    )}
                   </td>
                 </tr>
               ))}

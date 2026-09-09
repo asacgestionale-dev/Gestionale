@@ -17,6 +17,8 @@ function daDb(t) {
     lon: t.lon,
     lavoroId: t.lavoro_id,
     note: t.note || '',
+    valida: t.valida !== false,
+    distanza: t.distanza,
   }
 }
 
@@ -30,12 +32,47 @@ export async function timbratureDi(dipendente, giorno) {
   return (data || []).map(daDb)
 }
 
+// Storico delle ultime giornate, per la scheda dell'operaio.
+export async function timbratureDal(dipendente, dalGiorno) {
+  const { data } = await supabase
+    .from('timbrature')
+    .select('*')
+    .eq('dipendente', dipendente)
+    .gte('giorno', dalGiorno)
+    .order('ora')
+  return (data || []).map(daDb)
+}
+
+// Raggruppa le timbrature per giornata, dalla più recente.
+export function perGiornata(timbrature) {
+  const per = {}
+  for (const t of timbrature) {
+    per[t.giorno] = [...(per[t.giorno] || []), t]
+  }
+  return Object.entries(per)
+    .map(([giorno, righe]) => ({
+      giorno,
+      timbrature: righe,
+      minuti: minutiLavorati(righe),
+      fuoriZona: righe.some((t) => !t.valida),
+    }))
+    .sort((a, b) => b.giorno.localeCompare(a.giorno))
+}
+
 export async function timbratureDelGiorno(giorno) {
   const { data } = await supabase.from('timbrature').select('*').eq('giorno', giorno).order('ora')
   return (data || []).map(daDb)
 }
 
-export async function timbra({ dipendente, giorno, tipo, posizione, lavoroId }) {
+export async function timbra({
+  dipendente,
+  giorno,
+  tipo,
+  posizione,
+  lavoroId,
+  valida = true,
+  distanza = null,
+}) {
   const { data, error } = await supabase
     .from('timbrature')
     .insert({
@@ -46,6 +83,8 @@ export async function timbra({ dipendente, giorno, tipo, posizione, lavoroId }) 
       lat: posizione?.lat ?? null,
       lon: posizione?.lon ?? null,
       lavoro_id: lavoroId || null,
+      valida,
+      distanza,
     })
     .select()
     .single()

@@ -59,9 +59,9 @@ function Ufficio() {
         <Route path="lavori" element={<ArchivioLavori />} />
         <Route path="lavori/:id" element={<SchedaLavoro />} />
         <Route path="assegnazione-lavori" element={<AssegnazioneLavori />} />
-        <Route path="presenze" element={<Presenze />} />
+        <Route path="presenze" element={<Presenze utente={utente} />} />
         <Route path="utenti" element={<Utenti utente={utente} />} />
-        <Route path="impostazioni" element={<Impostazioni />} />
+        <Route path="impostazioni" element={<Impostazioni utente={utente} />} />
       </Route>
     </Routes>
   )

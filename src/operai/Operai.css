@@ -559,3 +559,97 @@
     border-right: 1px solid var(--op-bordo);
   }
 }
+
+/* ---- avviso di attenzione (timbratura fuori zona) ---- */
+
+.op-avviso.attenzione {
+  background: var(--op-ambra-chiaro);
+  color: var(--op-ambra);
+}
+
+.op-fuori-zona {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--op-ambra-chiaro);
+  color: var(--op-ambra);
+}
+
+.op-rosso {
+  color: var(--op-rosso);
+}
+
+/* ---- storico delle giornate ---- */
+
+.op-giornata {
+  background: var(--op-card);
+  border: 1px solid var(--op-bordo);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.op-giornata-testa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.op-giornata-nome {
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: capitalize;
+}
+
+.op-giornata-ore {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--op-blu);
+  flex-shrink: 0;
+}
+
+.op-giornata-righe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.op-passaggio {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--op-bg);
+}
+
+.op-passaggio.entrata {
+  color: var(--op-verde);
+}
+
+.op-passaggio.uscita {
+  color: var(--op-rosso);
+}
+
+.op-nota-piccola {
+  font-size: 13px;
+  color: var(--op-muto);
+}
+
+/* ---- richiesta ferie ---- */
+
+.op-form-ferie {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.op-form-ferie .op-giorni button {
+  padding: 10px 8px;
+}
