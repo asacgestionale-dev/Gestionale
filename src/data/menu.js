@@ -14,9 +14,11 @@ import {
 } from '../components/icons'
 
 // Voci del gestionale, raggruppate come nella barra laterale.
+// DATABASE tiene le anagrafiche (chi e cosa abbiamo), GESTIONE il lavoro di
+// tutti i giorni che su quelle anagrafiche si appoggia.
 export const SEZIONI = [
   {
-    nome: 'PERSONALE',
+    nome: 'DATABASE',
     voci: [
       {
         to: '/personale',
@@ -24,6 +26,35 @@ export const SEZIONI = [
         desc: 'Anagrafica dipendenti',
         icon: IconTeam,
       },
+      {
+        to: '/clienti',
+        titolo: 'Schede Clienti',
+        desc: 'Anagrafica e storico clienti',
+        icon: IconFolder,
+      },
+      {
+        to: '/autoparco',
+        titolo: 'Autoparco',
+        desc: 'Mezzi, scadenze e manutenzioni',
+        icon: IconFurgone,
+      },
+      {
+        to: '/dpi',
+        titolo: 'Anagrafica DPI',
+        desc: 'Dispositivi di protezione e scadenze',
+        icon: IconElmetto,
+      },
+      {
+        to: '/materiali',
+        titolo: 'Materiali',
+        desc: 'Magazzino e scorte',
+        icon: IconPackage,
+      },
+    ],
+  },
+  {
+    nome: 'GESTIONE',
+    voci: [
       {
         to: '/presenze',
         titolo: 'Timbrature e Presenze',
@@ -35,29 +66,6 @@ export const SEZIONI = [
         titolo: 'Squadre',
         desc: 'Componi le squadre giornaliere',
         icon: IconGroups,
-      },
-      {
-        to: '/dpi',
-        titolo: 'Anagrafica DPI',
-        desc: 'Dispositivi di protezione e scadenze',
-        icon: IconElmetto,
-      },
-      {
-        to: '/autoparco',
-        titolo: 'Autoparco',
-        desc: 'Mezzi, scadenze e manutenzioni',
-        icon: IconFurgone,
-      },
-    ],
-  },
-  {
-    nome: 'LAVORI',
-    voci: [
-      {
-        to: '/clienti',
-        titolo: 'Schede Clienti',
-        desc: 'Anagrafica e storico clienti',
-        icon: IconFolder,
       },
       {
         to: '/nuovo-lavoro',
@@ -91,17 +99,6 @@ export const SEZIONI = [
       },
     ],
   },
-  {
-    nome: 'MATERIALI',
-    voci: [
-      {
-        to: '/materiali',
-        titolo: 'Materiali',
-        desc: 'Magazzino e scorte',
-        icon: IconPackage,
-      },
-    ],
-  },
 ]
 
 const STORAGE_KEY = 'gestionale-tile-dashboard'
@@ -109,10 +106,11 @@ const STORAGE_KEY = 'gestionale-tile-dashboard'
 // Tile mostrati in dashboard al primo avvio.
 const PREDEFINITI = [
   '/personale',
+  '/clienti',
+  '/autoparco',
+  '/dpi',
   '/presenze',
   '/squadre',
-  '/dpi',
-  '/autoparco',
   '/nuovo-lavoro',
   '/assegnazione-lavori',
   '/consuntivazione',

@@ -273,3 +273,95 @@
   font-size: 12.5px;
   color: var(--text-muted);
 }
+
+/* =========================================================
+   Adattamento agli schermi: tablet e telefono
+   ========================================================= */
+
+@media (max-width: 1100px) {
+  .app-content {
+    padding: 26px 24px 40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-content {
+    padding: 18px 14px 40px;
+  }
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .page-subtitle {
+    margin-bottom: 20px;
+  }
+
+  .card {
+    padding: 16px 14px;
+    border-radius: 12px;
+  }
+
+  /* le tabelle larghe scorrono dentro il loro riquadro invece di
+     allargare la pagina */
+  .card,
+  .sezione {
+    overflow-x: auto;
+  }
+
+  .task-table {
+    min-width: 620px;
+  }
+
+  .dashboard-section {
+    margin-bottom: 26px;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    padding: 13px 14px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 620px) {
+  .task-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .task-tile {
+    padding: 16px 14px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .task-tile-label {
+    font-size: 14px;
+  }
+
+  .task-tile-desc {
+    font-size: 12px;
+  }
+}
+
+/* telefoni stretti: un riquadro per riga, niente quadrati */
+@media (max-width: 400px) {
+  .task-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .task-tile {
+    aspect-ratio: auto;
+    flex-direction: row;
+    align-items: center;
+  }
+}

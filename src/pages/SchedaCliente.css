@@ -323,3 +323,14 @@
     background: #3a2622;
   }
 }
+
+@media (max-width: 900px) {
+  .upload-riga {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .upload-riga > * {
+    flex: 1 1 160px;
+  }
+}

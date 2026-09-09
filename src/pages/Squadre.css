@@ -236,3 +236,20 @@
 .squadra-member button:hover {
   opacity: 1;
 }
+
+@media (max-width: 900px) {
+  .squadre-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .squadre-side {
+    width: 100%;
+  }
+
+  .squadre-date-row {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+}

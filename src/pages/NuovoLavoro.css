@@ -488,3 +488,27 @@
 .riga-elimina:hover {
   color: #b0503b;
 }
+
+@media (max-width: 900px) {
+  .pagina-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .form-griglia {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .lista-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .lista-head .campo-ricerca,
+  .lista-head select {
+    width: 100%;
+  }
+}

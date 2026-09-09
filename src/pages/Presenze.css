@@ -180,3 +180,14 @@
   background: var(--bg);
   color: var(--text);
 }
+
+@media (max-width: 900px) {
+  .squadre-date-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .etichetta-giorno {
+    width: 100%;
+  }
+}

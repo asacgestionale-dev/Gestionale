@@ -403,3 +403,28 @@
     color: #c5aee0;
   }
 }
+
+/* ---- schermi stretti: pannello sopra, timeline sotto ---- */
+
+@media (max-width: 900px) {
+  .assign-layout {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .job-panel {
+    width: 100%;
+  }
+
+  /* la timeline resta larga ma si trascina in orizzontale */
+  .timeline-wrap {
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .team-info-spacer,
+  .team-info {
+    width: 140px;
+    padding: 0 10px;
+  }
+}

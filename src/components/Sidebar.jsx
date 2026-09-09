@@ -19,7 +19,7 @@ function larghezzaSalvata() {
   return valore >= LARGHEZZA_MIN && valore <= LARGHEZZA_MAX ? valore : 300
 }
 
-export default function Sidebar({ utente, onEsci }) {
+export default function Sidebar({ utente, onEsci, stretto = false, aperto = false }) {
   const { pathname } = useLocation()
   // la sezione che contiene la pagina corrente parte aperta
   const [aperte, setAperte] = useState(() =>
@@ -78,16 +78,22 @@ export default function Sidebar({ utente, onEsci }) {
   }
 
   return (
-    <aside className="sidebar" style={{ width: larghezza }}>
-      <div
-        className="sidebar-maniglia"
-        onMouseDown={iniziaTrascinamento}
-        onDoubleClick={() => {
-          setLarghezza(300)
-          localStorage.setItem(LARGHEZZA_KEY, '300')
-        }}
-        title="Trascina per allargare il menu · doppio click per ripristinare"
-      />
+    <aside
+      className={'sidebar' + (stretto ? ' sidebar-scomparsa' : '') + (aperto ? ' aperta' : '')}
+      // su schermo stretto la larghezza la decide il foglio di stile
+      style={stretto ? undefined : { width: larghezza }}
+    >
+      {!stretto && (
+        <div
+          className="sidebar-maniglia"
+          onMouseDown={iniziaTrascinamento}
+          onDoubleClick={() => {
+            setLarghezza(300)
+            localStorage.setItem(LARGHEZZA_KEY, '300')
+          }}
+          title="Trascina per allargare il menu · doppio click per ripristinare"
+        />
+      )}
       <div className="sidebar-brand">
         <span className="sidebar-logo">G</span>
         <span className="sidebar-brand-text">Gestionale</span>
