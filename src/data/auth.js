@@ -5,11 +5,23 @@ import { supabase } from '../supabaseClient'
 
 export const RUOLI_UTENTE = ['Amministratore', 'Responsabile', 'Operaio']
 
+// Il link nella mail di conferma riporta al sito da cui ci si è registrati:
+// l'app degli operai se la registrazione è partita da /operai, altrimenti
+// il gestionale dell'ufficio. Senza questo Supabase userebbe il suo
+// indirizzo predefinito (localhost).
+function indirizzoDiRitorno() {
+  const { origin, pathname } = window.location
+  return origin + (pathname.startsWith('/operai') ? '/operai' : '/')
+}
+
 export async function registra({ nome, email, password, ruolo }) {
   const { data, error } = await supabase.auth.signUp({
     email: email.trim().toLowerCase(),
     password,
-    options: { data: { nome: nome.trim(), ruolo } },
+    options: {
+      data: { nome: nome.trim(), ruolo },
+      emailRedirectTo: indirizzoDiRitorno(),
+    },
   })
 
   if (error) {
