@@ -89,9 +89,13 @@ export default function Presenze({ utente }) {
     setPeriodo(null)
   }
 
+  // elenco dei dipendenti e loro stati arrivano con due richieste separate:
+  // chi non ha ancora uno stato (o non ha una riga per quel giorno) è presente
+  const statoDi = (nome) => presenze[nome] || 'Presente'
+
   const stati = STATI_PRESENZA.map((s) => ({
     label: s === 'Presente' ? 'Presenti' : 'In ' + s.toLowerCase(),
-    valore: DIPENDENTI.filter((n) => presenze[n] === s).length,
+    valore: DIPENDENTI.filter((n) => statoDi(n) === s).length,
   }))
 
   const giorniPeriodo = periodo && periodo.fine >= data ? giorniTra(data, periodo.fine).length : 0
@@ -105,7 +109,7 @@ export default function Presenze({ utente }) {
     async function carica() {
       const trovati = {}
       for (const nome of DIPENDENTI) {
-        if (presenze[nome] !== 'Malattia') continue
+        if (statoDi(nome) !== 'Malattia') continue
         const docs = await caricaDocumenti(chiaveCertificato(nome))
         if (docs.length > 0) trovati[nome] = docs[0]
       }
@@ -272,8 +276,8 @@ export default function Presenze({ utente }) {
                 <td className="col-dipendente">{nome}</td>
                 <td className="col-stato">
                   <select
-                    className={'badge-select badge-' + presenze[nome].toLowerCase()}
-                    value={presenze[nome]}
+                    className={'badge-select badge-' + statoDi(nome).toLowerCase()}
+                    value={statoDi(nome)}
                     onChange={(e) => cambiaStato(nome, e.target.value)}
                   >
                     {STATI_PRESENZA.map((s) => (
@@ -312,7 +316,7 @@ export default function Presenze({ utente }) {
                     )}
 
                     {/* alla malattia si allega il certificato medico */}
-                    {presenze[nome] === 'Malattia' && (
+                    {statoDi(nome) === 'Malattia' && (
                       <div className="certificato-box">
                         {certificati[nome] ? (
                           <>
