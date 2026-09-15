@@ -51,9 +51,8 @@
   align-items: flex-start;
 }
 
-/* l'elenco delle persone sta a destra delle squadre */
+/* l'elenco delle persone sta a sinistra delle squadre */
 .squadre-side {
-  order: 2;
   width: 270px;
   flex-shrink: 0;
   position: sticky;
@@ -428,9 +427,8 @@
     gap: 16px;
   }
 
-  /* sul telefono l'elenco torna in cima: si sceglie la persona e poi la squadra */
+  /* sul telefono l'elenco sta in cima: si sceglie la persona e poi la squadra */
   .squadre-side {
-    order: -1;
     width: 100%;
     position: static;
   }

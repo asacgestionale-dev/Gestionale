@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { caricaLavori, aggiungiLavoro, minutiDaOrario } from '../data/lavori'
+import { useNavigate } from 'react-router-dom'
+import { caricaLavori, aggiungiLavoro, minutiDaOrario, formattaEuro } from '../data/lavori'
+import { oggiISO, domaniISO } from '../data/squadre'
+import { TestataDb, Riepilogo } from '../components/Database'
 import { caricaClienti } from '../data/clienti'
 import InputIndirizzo from '../components/InputIndirizzo'
 import SelezioneCliente from '../components/SelezioneCliente'
@@ -126,19 +128,49 @@ export default function NuovoLavoro() {
     setOraAppuntamento('08:00')
   }
 
+  // quadro dei lavori già in coda, per decidere quando fissare il nuovo
+  const oggi = oggiISO()
+  const domani = domaniISO()
+  const fraUnaSettimana = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
+  const inCoda = jobs.filter((j) => !j.chiuso && !j.assegnato?.teamId)
+  const domaniInAgenda = jobs.filter((j) => j.assegnato?.teamId && j.assegnato?.data === domani)
+  const appuntamentiSettimana = jobs.filter(
+    (j) => j.appuntamento && j.assegnato?.data >= oggi && j.assegnato?.data <= fraUnaSettimana,
+  )
+  const valoreInCoda = inCoda.reduce((s, j) => s + (Number(j.importo) || 0), 0)
+
   return (
     <>
-      <div className="pagina-head">
-        <div>
-          <h1 className="page-title">Nuovo Lavoro</h1>
-          <p className="page-subtitle">
-            Crea un lavoro: comparirà tra i "da assegnare" nella pagina Assegnazione Lavori.
-          </p>
-        </div>
-        <Link to="/assegnazione-lavori" className="vai-assegnazione">
-          Vai ad Assegnazione Lavori →
-        </Link>
-      </div>
+      <TestataDb
+        titolo="Nuovo Lavoro"
+        sottotitolo="Crea un lavoro: finisce tra quelli da pianificare, poi gli dai squadra e orario in Assegnazione Lavori."
+        azioni={[
+          { testo: 'Tabellone lavori', onClick: () => navigate('/lavori'), secondaria: true },
+          {
+            testo: 'Assegnazione Lavori',
+            onClick: () => navigate('/assegnazione-lavori'),
+            secondaria: true,
+          },
+        ]}
+      />
+
+      <Riepilogo
+        voci={[
+          {
+            valore: inCoda.length,
+            etichetta: 'Già da pianificare',
+            tono: inCoda.length ? 'ambra' : undefined,
+            nota: 'senza squadra',
+          },
+          {
+            valore: domaniInAgenda.length,
+            etichetta: 'In agenda domani',
+            nota: `${domaniInAgenda.reduce((s, j) => s + (Number(j.durata) || 0), 0)} h di lavoro`,
+          },
+          { valore: appuntamentiSettimana.length, etichetta: 'Appuntamenti nei prossimi 7 giorni' },
+          { valore: formattaEuro(valoreInCoda), etichetta: 'Valore dei lavori in coda' },
+        ]}
+      />
 
       <form className="job-form nuovo-lavoro-form" onSubmit={handleSubmit}>
         <div className="form-griglia">

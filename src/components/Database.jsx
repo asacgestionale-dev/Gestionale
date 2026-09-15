@@ -96,3 +96,58 @@ export function Strumenti({ titolo, mostrati, totali, ricerca, onRicerca, segnap
 export function Vuoto({ children }) {
   return <p className="db-vuoto">{children}</p>
 }
+
+// La barra della giornata, uguale in Squadre, Presenze e Assegnazione:
+// frecce, calendario, scorciatoie (Oggi, Domani) e il nome del giorno.
+export function BarraGiorno({ data, onCambia, scorciatoie = [] }) {
+  function sposta(passo) {
+    const d = new Date(data)
+    d.setDate(d.getDate() + passo)
+    onCambia(d.toISOString().slice(0, 10))
+  }
+
+  return (
+    <div className="card db-giorno">
+      <button
+        type="button"
+        className="db-giorno-nav"
+        onClick={() => sposta(-1)}
+        aria-label="Giorno precedente"
+      >
+        ‹
+      </button>
+      <input
+        type="date"
+        value={data}
+        onChange={(e) => e.target.value && onCambia(e.target.value)}
+        aria-label="Giornata"
+      />
+      <button
+        type="button"
+        className="db-giorno-nav"
+        onClick={() => sposta(1)}
+        aria-label="Giorno successivo"
+      >
+        ›
+      </button>
+      {scorciatoie.map((s) => (
+        <button
+          key={s.etichetta}
+          type="button"
+          className="db-giorno-scorciatoia"
+          onClick={() => onCambia(s.data)}
+          disabled={data === s.data}
+        >
+          {s.etichetta}
+        </button>
+      ))}
+      <span className="db-giorno-nome">
+        {new Date(data).toLocaleDateString('it-IT', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+        })}
+      </span>
+    </div>
+  )
+}

@@ -31,6 +31,7 @@ import {
 } from '../data/ferie'
 import { formattaDistanza } from '../data/impostazioni'
 import { useConferma } from '../components/useConferma'
+import { TestataDb, Riepilogo, BarraGiorno, Strumenti } from '../components/Database'
 import './Presenze.css'
 
 function formattaDataBreve(iso) {
@@ -44,6 +45,8 @@ export default function Presenze({ utente }) {
   const [DIPENDENTI, setDipendenti] = useState([])
   // dipendente per cui si sta indicando la data di fine assenza
   const [periodo, setPeriodo] = useState(null)
+  const [ricerca, setRicerca] = useState('')
+  const [filtroStato, setFiltroStato] = useState('Tutti')
   const { chiedi, dialogo } = useConferma()
 
   useEffect(() => {
@@ -58,18 +61,6 @@ export default function Presenze({ utente }) {
     setData(nuovaData)
     setPeriodo(null)
   }
-
-  function spostaGiorno(passo) {
-    const d = new Date(data)
-    d.setDate(d.getDate() + passo)
-    cambiaData(d.toISOString().slice(0, 10))
-  }
-
-  const etichettaGiorno = new Date(data).toLocaleDateString('it-IT', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
 
   async function cambiaStato(nome, stato) {
     setPresenze((prev) => ({ ...prev, [nome]: stato }))
@@ -93,10 +84,7 @@ export default function Presenze({ utente }) {
   // chi non ha ancora uno stato (o non ha una riga per quel giorno) è presente
   const statoDi = (nome) => presenze[nome] || 'Presente'
 
-  const stati = STATI_PRESENZA.map((s) => ({
-    label: s === 'Presente' ? 'Presenti' : 'In ' + s.toLowerCase(),
-    valore: DIPENDENTI.filter((n) => statoDi(n) === s).length,
-  }))
+  const conta = (stato) => DIPENDENTI.filter((n) => statoDi(n) === stato).length
 
   const giorniPeriodo = periodo && periodo.fine >= data ? giorniTra(data, periodo.fine).length : 0
 
@@ -207,6 +195,36 @@ export default function Presenze({ utente }) {
     }))
     .sort((a, b) => a.nome.localeCompare(b.nome))
 
+  const fuoriZona = righeTimbrature.filter((r) => r.fuoriZona).length
+  const voci = [
+    {
+      valore: conta('Presente'),
+      etichetta: 'Presenti',
+      tono: 'verde',
+      nota: `su ${DIPENDENTI.length} in organico`,
+    },
+    { valore: conta('Ferie'), etichetta: 'In ferie' },
+    {
+      valore: conta('Malattia'),
+      etichetta: 'In malattia',
+      tono: conta('Malattia') ? 'rosso' : undefined,
+    },
+    { valore: conta('Permesso'), etichetta: 'In permesso' },
+    {
+      valore: inAttesa.length,
+      etichetta: 'Richieste da approvare',
+      tono: inAttesa.length ? 'ambra' : undefined,
+      nota: fuoriZona ? `${fuoriZona} timbrature fuori zona` : null,
+    },
+  ]
+
+  const q = ricerca.trim().toLowerCase()
+  const visibili = DIPENDENTI.filter(
+    (n) =>
+      (filtroStato === 'Tutti' || statoDi(n) === filtroStato) &&
+      (!q || n.toLowerCase().includes(q)),
+  )
+
   async function apriCertificato(doc) {
     const url = await urlDocumento(doc.id)
     if (url) window.open(url, '_blank', 'noopener')
@@ -214,54 +232,41 @@ export default function Presenze({ utente }) {
 
   return (
     <>
-      <h1 className="page-title">Timbrature e Presenze</h1>
-      <p className="page-subtitle">Presenze, ferie, malattie e permessi del personale</p>
+      <TestataDb
+        titolo="Timbrature e Presenze"
+        sottotitolo="Presenze, ferie, malattie e permessi del personale, con le richieste e le timbrature arrivate dal telefono."
+      />
 
-      <div className="squadre-date-row">
-        <label htmlFor="presenze-data">Giornata</label>
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => spostaGiorno(-1)}
-          aria-label="Giorno precedente"
-        >
-          ‹
-        </button>
-        <input
-          id="presenze-data"
-          type="date"
-          value={data}
-          onChange={(e) => cambiaData(e.target.value)}
-        />
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => spostaGiorno(1)}
-          aria-label="Giorno successivo"
-        >
-          ›
-        </button>
-        <button
-          type="button"
-          className="btn-oggi"
-          onClick={() => cambiaData(oggiISO())}
-          disabled={data === oggiISO()}
-        >
-          Oggi
-        </button>
-        <span className="etichetta-giorno">{etichettaGiorno}</span>
-      </div>
+      <Riepilogo voci={voci} />
 
-      <div className="stat-grid">
-        {stati.map((s) => (
-          <div className="stat-card" key={s.label}>
-            <span className="stat-value">{s.valore}</span>
-            <span className="stat-label">{s.label}</span>
-          </div>
-        ))}
-      </div>
+      <BarraGiorno
+        data={data}
+        onCambia={cambiaData}
+        scorciatoie={[{ etichetta: 'Oggi', data: oggiISO() }]}
+      />
 
-      <div className="card">
+      <div className="card sezione">
+        <Strumenti
+          titolo="Presenze del giorno"
+          mostrati={visibili.length}
+          totali={DIPENDENTI.length}
+          ricerca={ricerca}
+          onRicerca={setRicerca}
+          segnaposto="Cerca dipendente..."
+        >
+          <select
+            className="db-filtro"
+            value={filtroStato}
+            onChange={(e) => setFiltroStato(e.target.value)}
+          >
+            <option value="Tutti">Tutti gli stati</option>
+            {STATI_PRESENZA.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Strumenti>
         <table className="task-table">
           <thead>
             <tr>
@@ -271,7 +276,7 @@ export default function Presenze({ utente }) {
             </tr>
           </thead>
           <tbody>
-            {DIPENDENTI.map((nome) => (
+            {visibili.map((nome) => (
               <tr key={nome}>
                 <td className="col-dipendente">{nome}</td>
                 <td className="col-stato">
@@ -359,7 +364,7 @@ export default function Presenze({ utente }) {
       </div>
 
       <div className="card sezione">
-        <span className="job-list-label">Richieste da approvare ({inAttesa.length})</span>
+        <Strumenti titolo="Richieste di ferie e permessi da approvare" mostrati={inAttesa.length} />
         {inAttesa.length === 0 ? (
           <p className="job-list-empty">
             Nessuna richiesta in attesa: le inviano gli operai dal telefono.
@@ -476,9 +481,7 @@ export default function Presenze({ utente }) {
       </div>
 
       <div className="card sezione">
-        <span className="job-list-label">
-          Timbrature dal telefono ({righeTimbrature.length})
-        </span>
+        <Strumenti titolo="Timbrature dal telefono" mostrati={righeTimbrature.length} />
         {righeTimbrature.length === 0 ? (
           <p className="job-list-empty">
             Nessuna timbratura registrata in questa giornata: le inviano gli operai

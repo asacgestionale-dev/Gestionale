@@ -266,7 +266,101 @@
   background: var(--bg);
 }
 
+/* avviso in cima a una pagina, con un'azione a destra */
+.avviso-chiuso {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--accent-soft);
+  margin-bottom: 18px;
+}
+
+/* ---- barra della giornata ---- */
+
+.db-giorno {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.db-giorno-nav {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-content);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.db-giorno-nav:hover {
+  border-color: var(--accent-2);
+}
+
+.db-giorno input[type='date'] {
+  height: 36px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.db-giorno input[type='date']:focus {
+  border-color: var(--accent-2);
+}
+
+.db-giorno-scorciatoia {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-content);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.db-giorno-scorciatoia:hover:not(:disabled) {
+  border-color: var(--accent-2);
+}
+
+/* la scorciatoia del giorno mostrato resta accesa */
+.db-giorno-scorciatoia:disabled {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  cursor: default;
+}
+
+.db-giorno-nome {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-h);
+  text-transform: capitalize;
+}
+
 @media (max-width: 900px) {
+  .db-giorno-nome {
+    margin-left: 0;
+    width: 100%;
+  }
+
   .db-ricerca {
     width: 100%;
   }

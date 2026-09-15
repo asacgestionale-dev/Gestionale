@@ -13,7 +13,7 @@ import {
 } from '../data/squadre'
 import { caricaPresenze, caricaTuttePresenze } from '../data/presenze'
 import { caricaLavori } from '../data/lavori'
-import { TestataDb, Riepilogo } from '../components/Database'
+import { TestataDb, Riepilogo, BarraGiorno } from '../components/Database'
 import { useConferma } from '../components/useConferma'
 import './Presenze.css'
 import './Squadre.css'
@@ -275,47 +275,14 @@ export default function Squadre() {
 
       <Riepilogo voci={voci} />
 
-      <div className="card squadre-date-row giorno-barra">
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => setData(spostaData(data, -1))}
-          aria-label="Giorno precedente"
-        >
-          ‹
-        </button>
-        <input
-          type="date"
-          value={data}
-          onChange={(e) => e.target.value && setData(e.target.value)}
-          aria-label="Giornata"
-        />
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => setData(spostaData(data, 1))}
-          aria-label="Giorno successivo"
-        >
-          ›
-        </button>
-        <button
-          type="button"
-          className="btn-oggi"
-          onClick={() => setData(oggiISO())}
-          disabled={data === oggiISO()}
-        >
-          Oggi
-        </button>
-        <button
-          type="button"
-          className="btn-oggi"
-          onClick={() => setData(domaniISO())}
-          disabled={data === domaniISO()}
-        >
-          Domani
-        </button>
-        <span className="etichetta-giorno giorno-nome">{formattaGiorno(data, true)}</span>
-      </div>
+      <BarraGiorno
+        data={data}
+        onCambia={setData}
+        scorciatoie={[
+          { etichetta: 'Oggi', data: oggiISO() },
+          { etichetta: 'Domani', data: domaniISO() },
+        ]}
+      />
 
       <div className="squadre-layout">
         <aside className="squadre-side">

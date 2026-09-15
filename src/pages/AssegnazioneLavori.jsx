@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { SQUADRE_BASE, oggiISO, caricaComposizione } from '../data/squadre'
+import { useNavigate } from 'react-router-dom'
+import { SQUADRE_BASE, oggiISO, domaniISO, caricaComposizione } from '../data/squadre'
 import { caricaLavori, aggiornaLavoro } from '../data/lavori'
 import { BASE, MINUTI_SOSTA, tragittoPerLavoro, formattaTragitto } from '../data/logistica'
+import { TestataDb, Riepilogo, BarraGiorno } from '../components/Database'
 import './AssegnazioneLavori.css'
 import './NuovoLavoro.css'
 
@@ -76,12 +77,6 @@ export default function AssegnazioneLavori() {
   function nellaGiornata(j) {
     if (!j.assegnato) return false
     return (j.assegnato.data || oggiISO()) === data
-  }
-
-  function spostaGiorno(passo) {
-    const d = new Date(data)
-    d.setDate(d.getDate() + passo)
-    setData(d.toISOString().slice(0, 10))
   }
 
   // distanza e tempo di viaggio dalla base, per ogni lavoro con un luogo indicato
@@ -231,55 +226,61 @@ export default function AssegnazioneLavori() {
     setJobs((prev) => prev.map((j) => (j.id === jobId ? { ...j, assegnato: null } : j)))
   }
 
+  // quadro della giornata mostrata
+  const delGiorno = jobs.filter(nellaGiornata)
+  const oreGiorno = delGiorno.reduce((s, j) => s + (Number(j.durata) || 0), 0)
+  const squadreAlLavoro = SQUADRE_BASE.filter((s) =>
+    delGiorno.some((j) => j.assegnato.teamId === s.id),
+  )
+  const senzaPersone = squadreAlLavoro.filter((s) => (composizione[s.id] || []).length === 0)
+  const senzaSquadra = delGiorno.filter((j) => !j.assegnato.teamId).length
+  const appuntamenti = delGiorno.filter((j) => j.appuntamento).length
+
+  const voci = [
+    {
+      valore: nonAssegnati.length,
+      etichetta: 'Da assegnare',
+      tono: nonAssegnati.length ? 'ambra' : 'verde',
+      nota: nonAssegnati.length ? 'nella colonna a sinistra' : 'tutti in agenda',
+    },
+    { valore: delGiorno.length, etichetta: 'Lavori in agenda', nota: `${oreGiorno} h di lavoro` },
+    {
+      valore: `${squadreAlLavoro.length} di ${SQUADRE_BASE.length}`,
+      etichetta: 'Squadre al lavoro',
+      tono: senzaPersone.length ? 'rosso' : undefined,
+      nota: senzaPersone.length
+        ? `${senzaPersone.map((s) => s.nome).join(', ')} senza persone`
+        : null,
+    },
+    {
+      valore: appuntamenti,
+      etichetta: 'Appuntamenti fissi',
+      tono: senzaSquadra ? 'rosso' : undefined,
+      nota: senzaSquadra ? `${senzaSquadra} ancora senza squadra` : null,
+    },
+  ]
+
   return (
     <>
-      <h1 className="page-title">Assegnazione Lavori</h1>
-      <p className="page-subtitle">
-        Trascina un lavoro sulla timeline (07:00 – 20:00, passi da mezz'ora) · In giallo il
-        viaggio: il primo lavoro parte da {BASE.indirizzo}, i successivi dal cantiere precedente
-        (+{MINUTI_SOSTA} min)
-      </p>
+      <TestataDb
+        titolo="Assegnazione Lavori"
+        sottotitolo={`Trascina un lavoro sulla timeline (07:00 – 20:00, a mezz'ore). In giallo il viaggio: il primo lavoro parte da ${BASE.indirizzo}, i successivi dal cantiere precedente (+${MINUTI_SOSTA} min).`}
+        azioni={[
+          { testo: '+ Nuovo lavoro', onClick: () => navigate('/nuovo-lavoro') },
+          { testo: 'Tabellone lavori', onClick: () => navigate('/lavori'), secondaria: true },
+        ]}
+      />
 
-      <div className="squadre-date-row">
-        <label htmlFor="assegna-data">Giornata</label>
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => spostaGiorno(-1)}
-          aria-label="Giorno precedente"
-        >
-          ‹
-        </button>
-        <input
-          id="assegna-data"
-          type="date"
-          value={data}
-          onChange={(e) => setData(e.target.value)}
-        />
-        <button
-          type="button"
-          className="nav-giorno"
-          onClick={() => spostaGiorno(1)}
-          aria-label="Giorno successivo"
-        >
-          ›
-        </button>
-        <button
-          type="button"
-          className="btn-oggi"
-          onClick={() => setData(oggiISO())}
-          disabled={data === oggiISO()}
-        >
-          Oggi
-        </button>
-        <span className="etichetta-giorno">
-          {new Date(data).toLocaleDateString('it-IT', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
-        </span>
-      </div>
+      <Riepilogo voci={voci} />
+
+      <BarraGiorno
+        data={data}
+        onCambia={setData}
+        scorciatoie={[
+          { etichetta: 'Oggi', data: oggiISO() },
+          { etichetta: 'Domani', data: domaniISO() },
+        ]}
+      />
 
       <div className="assign-layout">
         <aside className="job-panel">
@@ -289,9 +290,6 @@ export default function AssegnazioneLavori() {
             onDrop={handleDropSuPannello}
           >
             <span className="job-list-label">Da assegnare ({nonAssegnati.length})</span>
-            <Link to="/nuovo-lavoro" className="vai-assegnazione">
-              + Nuovo lavoro
-            </Link>
             {nonAssegnati.length === 0 && (
               <p className="job-list-empty">Nessun lavoro in attesa.</p>
             )}
