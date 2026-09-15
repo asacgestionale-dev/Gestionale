@@ -145,7 +145,7 @@ export default function NuovoLavoro() {
         titolo="Nuovo Lavoro"
         sottotitolo="Crea un lavoro: finisce tra quelli da pianificare, poi gli dai squadra e orario in Assegnazione Lavori."
         azioni={[
-          { testo: 'Tabellone lavori', onClick: () => navigate('/lavori'), secondaria: true },
+          { testo: 'Tutti i lavori', onClick: () => navigate('/lavori'), secondaria: true },
           {
             testo: 'Assegnazione Lavori',
             onClick: () => navigate('/assegnazione-lavori'),

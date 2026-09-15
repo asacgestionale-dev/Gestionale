@@ -128,7 +128,7 @@ export default function Consuntivazione() {
   }
 
   // arrivano qui i lavori dal giorno in cui erano pianificati: quelli futuri
-  // sono ancora "pianificati" e restano nel tabellone dei lavori
+  // sono ancora "pianificati" e restano nella pagina Lavori
   const tutti = daConsuntivare(lavori).filter(
     (l) => l.consuntivo || l.chiuso || (l.assegnato?.data || oggiISO()) <= oggiISO(),
   )
@@ -369,7 +369,7 @@ export default function Consuntivazione() {
       <TestataDb
         titolo="Consuntivazione Lavori"
         sottotitolo="Qui arrivano i lavori eseguiti: l’operaio dichiara ore e materiali, tu controlli e chiudi. Clicca una riga per aprire il rapportino."
-        azioni={[{ testo: 'Tabellone lavori', onClick: () => navigate('/lavori'), secondaria: true }]}
+        azioni={[{ testo: 'Tutti i lavori', onClick: () => navigate('/lavori'), secondaria: true }]}
       />
 
       <Riepilogo voci={voci} />

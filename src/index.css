@@ -104,8 +104,6 @@
 :root[data-tema='aziendale'] .squadra,
 :root[data-tema='aziendale'] .elenco-persone,
 :root[data-tema='aziendale'] .db-tile,
-:root[data-tema='aziendale'] .tab-colonna,
-:root[data-tema='aziendale'] .tab-carta,
 :root[data-tema='aziendale'] .job-list {
   border-radius: 3px;
 }

@@ -76,7 +76,7 @@ export const SEZIONI = [
       {
         to: '/lavori',
         titolo: 'Lavori',
-        desc: 'Tabellone: ogni lavoro nella sua fase',
+        desc: 'Tutti i lavori e la loro fase',
         icon: IconArchive,
       },
       {

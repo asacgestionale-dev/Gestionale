@@ -267,7 +267,7 @@ export default function AssegnazioneLavori() {
         sottotitolo={`Trascina un lavoro sulla timeline (07:00 – 20:00, a mezz'ore). In giallo il viaggio: il primo lavoro parte da ${BASE.indirizzo}, i successivi dal cantiere precedente (+${MINUTI_SOSTA} min).`}
         azioni={[
           { testo: '+ Nuovo lavoro', onClick: () => navigate('/nuovo-lavoro') },
-          { testo: 'Tabellone lavori', onClick: () => navigate('/lavori'), secondaria: true },
+          { testo: 'Tutti i lavori', onClick: () => navigate('/lavori'), secondaria: true },
         ]}
       />
 
