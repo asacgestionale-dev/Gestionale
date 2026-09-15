@@ -34,6 +34,13 @@ export async function salvaImpostazione(chiave, valore) {
 export const caricaZone = () => caricaImpostazione(CHIAVE_ZONE, ZONE_VUOTE)
 export const salvaZone = (zone) => salvaImpostazione(CHIAVE_ZONE, zone)
 
+// Costo aziendale medio di un'ora di lavoro: serve a calcolare i margini.
+export const CHIAVE_ECONOMIA = 'economia'
+export const ECONOMIA_PREDEFINITA = { costoOrario: 25 }
+
+export const caricaEconomia = () => caricaImpostazione(CHIAVE_ECONOMIA, ECONOMIA_PREDEFINITA)
+export const salvaEconomia = (valore) => salvaImpostazione(CHIAVE_ECONOMIA, valore)
+
 // Distanza in metri fra due punti sulla superficie terrestre.
 export function distanzaMetri(a, b) {
   const R = 6371000

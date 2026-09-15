@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { caricaClienti } from '../data/clienti'
-import { caricaLavori, aggiornaLavoro as salvaLavoroSuDb, formattaEuro } from '../data/lavori'
+import { caricaLavori, formattaEuro } from '../data/lavori'
+import { caricaFatture, economiaLavoro } from '../data/fatture'
+import { caricaPagamenti } from '../data/pagamenti'
+import { faseLavoro } from '../data/statoLavoro'
 import {
   CATEGORIE,
   caricaDocumenti,
@@ -31,11 +34,16 @@ export default function SchedaCliente() {
   const [documenti, setDocumenti] = useState([])
   const [categoria, setCategoria] = useState(CATEGORIE[0])
   const [caricamento, setCaricamento] = useState(false)
+  const [fatture, setFatture] = useState([])
+  const [pagamenti, setPagamenti] = useState({})
+  const navigate = useNavigate()
   const { chiedi, dialogo } = useConferma()
 
   useEffect(() => {
     caricaClienti().then(setClienti)
     caricaLavori().then(setLavori)
+    caricaFatture().then(setFatture)
+    caricaPagamenti().then(setPagamenti)
   }, [])
 
   useEffect(() => {
@@ -45,9 +53,17 @@ export default function SchedaCliente() {
   const cliente = clienti.find((c) => c.id === id)
   const lavoriCliente = lavori.filter((l) => l.clienteId === id)
 
-  const totaleImporti = lavoriCliente.reduce((s, l) => s + (l.importo || 0), 0)
-  const totaleIncassato = lavoriCliente.reduce((s, l) => s + (l.incassato || 0), 0)
-  const daIncassare = totaleImporti - totaleIncassato
+  // conti e fase di ogni lavoro, calcolati come nel resto del gestionale
+  const righeLavori = lavoriCliente.map((l) => {
+    const economia = economiaLavoro(l, fatture, pagamenti, 0)
+    return { lavoro: l, economia, fase: faseLavoro(l, economia) }
+  })
+  const totaleImporti = righeLavori.reduce((s, r) => s + r.economia.importo, 0)
+  const totaleIncassato = righeLavori.reduce((s, r) => s + r.economia.incassato, 0)
+  const daIncassare = righeLavori.reduce((s, r) => s + r.economia.daIncassare, 0)
+  const daFatturare = righeLavori
+    .filter((r) => r.lavoro.chiuso)
+    .reduce((s, r) => s + r.economia.daFatturare, 0)
 
   // materiali aggregati con il numero di volte che sono stati usati
   const conteggioMateriali = {}
@@ -57,11 +73,6 @@ export default function SchedaCliente() {
     }
   }
   const materiali = Object.entries(conteggioMateriali).sort((a, b) => b[1] - a[1])
-
-  function aggiornaLavoro(lavoroId, patch) {
-    setLavori((prev) => prev.map((l) => (l.id === lavoroId ? { ...l, ...patch } : l)))
-    salvaLavoroSuDb(lavoroId, patch)
-  }
 
   async function handleUpload(e) {
     const files = Array.from(e.target.files || [])
@@ -140,11 +151,11 @@ export default function SchedaCliente() {
         </div>
         <div className="stat-card">
           <span className="stat-value stat-rosso">{formattaEuro(daIncassare)}</span>
-          <span className="stat-label">Da incassare</span>
+          <span className="stat-label">Da incassare (fatture aperte)</span>
         </div>
         <div className="stat-card">
-          <span className="stat-value">{lavoriCliente.length}</span>
-          <span className="stat-label">Lavori totali</span>
+          <span className="stat-value stat-ambra">{formattaEuro(daFatturare)}</span>
+          <span className="stat-label">Da fatturare</span>
         </div>
       </div>
 
@@ -158,44 +169,32 @@ export default function SchedaCliente() {
               <tr>
                 <th>Lavoro</th>
                 <th>Data</th>
-                <th>Stato</th>
+                <th>Fase</th>
                 <th>Importo</th>
                 <th>Incassato</th>
               </tr>
             </thead>
             <tbody>
-              {lavoriCliente.map((l) => (
-                <tr key={l.id}>
+              {righeLavori.map(({ lavoro: l, economia, fase }) => (
+                <tr
+                  key={l.id}
+                  className="db-riga"
+                  onClick={() => navigate('/lavori/' + l.id)}
+                  title="Apri la scheda del lavoro"
+                >
                   <td>
-                    {l.titolo}
+                    <span className="cliente-nome-link">{l.titolo}</span>
                     {l.materiali?.length > 0 && (
                       <span className="riga-sub">Materiali: {l.materiali.join(', ')}</span>
                     )}
                   </td>
-                  <td>{formattaData(l.creatoIl)}</td>
+                  <td>{formattaData(l.assegnato?.data || l.creatoIl)}</td>
                   <td>
-                    <label className="check-riga">
-                      <input
-                        type="checkbox"
-                        checked={!!l.completato}
-                        onChange={(e) => aggiornaLavoro(l.id, { completato: e.target.checked })}
-                      />
-                      {l.completato ? 'Svolto' : 'Da fare'}
-                    </label>
+                    <span className={'badge ' + fase.classe}>{fase.titolo}</span>
+                    {fase.dettaglio && <span className="riga-sub">{fase.dettaglio}</span>}
                   </td>
                   <td>{formattaEuro(l.importo)}</td>
-                  <td>
-                    <input
-                      type="number"
-                      className="input-incasso"
-                      min="0"
-                      step="10"
-                      value={l.incassato || 0}
-                      onChange={(e) =>
-                        aggiornaLavoro(l.id, { incassato: Number(e.target.value) || 0 })
-                      }
-                    />
-                  </td>
+                  <td>{formattaEuro(economia.incassato)}</td>
                 </tr>
               ))}
             </tbody>

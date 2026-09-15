@@ -16,7 +16,7 @@ function miaSquadra(composizione, nome) {
 function statoDelLavoro(lavoro) {
   if (lavoro.chiuso) return { testo: 'Chiuso dall’ufficio', classe: 'chiuso' }
   if (lavoro.consuntivo?.rifiutato) return { testo: 'Da correggere', classe: 'correggere' }
-  if (lavoro.consuntivo) return { testo: 'Rapportino inviato', classe: 'inviato' }
+  if (lavoro.consuntivo) return { testo: 'Inviato, da validare', classe: 'inviato' }
   return { testo: 'Da fare', classe: 'da-fare' }
 }
 

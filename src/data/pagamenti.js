@@ -24,6 +24,8 @@ export async function aggiungiPagamento(lavoroId, movimento) {
       data: movimento.data,
       modalita: movimento.modalita,
       note: movimento.note || '',
+      // l'incasso salda una fattura precisa, se indicata
+      fattura_id: movimento.fatturaId || null,
     })
     .select()
     .single()

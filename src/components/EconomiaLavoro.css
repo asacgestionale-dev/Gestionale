@@ -1,0 +1,111 @@
+.eco {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.eco-sezione {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eco-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eco-form {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eco-nota {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.eco-incasso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.eco-incasso .db-campo {
+  width: 180px;
+}
+
+.eco-costi {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-content);
+}
+
+.eco-riga-costo {
+  display: grid;
+  grid-template-columns: 140px 1fr 130px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.eco-riga-costo + .eco-riga-costo {
+  border-top: 1px solid var(--border);
+}
+
+.eco-riga-costo > :first-child {
+  font-weight: 600;
+}
+
+.eco-riga-costo > :last-child {
+  text-align: right;
+  font-weight: 700;
+}
+
+.eco-spiega {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.eco-totale {
+  background: var(--bg);
+}
+
+.eco-margine {
+  background: var(--accent-soft);
+  font-size: 15px;
+}
+
+.eco-dettaglio-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 620px) {
+  .eco-riga-costo {
+    grid-template-columns: 1fr auto;
+  }
+
+  .eco-riga-costo .eco-spiega {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+}

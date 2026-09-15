@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { TEMI, caricaTema, applicaTema } from '../data/tema'
 import { cambiaPassword } from '../data/auth'
 import ZoneTimbratura from './ZoneTimbratura'
+import ImpostazioniEconomia from './ImpostazioniEconomia'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
 import './Impostazioni.css'
@@ -82,6 +83,8 @@ export default function Impostazioni({ utente }) {
       </div>
 
       <ZoneTimbratura amministratore={utente?.ruolo === 'Amministratore'} />
+
+      <ImpostazioniEconomia amministratore={utente?.ruolo === 'Amministratore'} />
 
       <div className="card sezione-impostazione">
         <div className="impostazione-riga">

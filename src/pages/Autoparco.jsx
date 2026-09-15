@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { caricaDipendenti } from '../data/dipendenti'
 import {
   TIPI_MEZZO,
@@ -17,6 +17,7 @@ import {
   formattaKm,
 } from '../data/autoparco'
 import { formattaEuro } from '../data/lavori'
+import { TestataDb, Riepilogo, PannelloNuovo, Campo, Strumenti, Vuoto } from '../components/Database'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
@@ -59,10 +60,13 @@ const INTERVENTO_VUOTO = {
   note: '',
 }
 
+const FILTRI = ['Tutti', 'In servizio', 'Con scadenze', 'Fuori servizio']
+
 export default function Autoparco() {
   const [mezzi, setMezzi] = useState([])
   const [interventi, setInterventi] = useState([])
   const [dipendenti, setDipendenti] = useState([])
+  const [nuovoAperto, setNuovoAperto] = useState(false)
   const [form, setForm] = useState(MEZZO_VUOTO)
   const [errore, setErrore] = useState('')
   const [apertoId, setApertoId] = useState(null)
@@ -99,6 +103,7 @@ export default function Autoparco() {
     }
     setErrore('')
     setForm(MEZZO_VUOTO)
+    setNuovoAperto(false)
     await ricarica()
   }
 
@@ -119,6 +124,11 @@ export default function Autoparco() {
     const aggiornato = { ...mezzo, ...patch }
     setMezzi((prev) => prev.map((m) => (m.id === mezzo.id ? aggiornato : m)))
     await aggiornaMezzo(mezzo.id, aggiornato)
+  }
+
+  function apriScheda(mezzo) {
+    setApertoId(apertoId === mezzo.id ? null : mezzo.id)
+    setFormIntervento({ ...INTERVENTO_VUOTO, km: mezzo.km })
   }
 
   async function registraIntervento(e, mezzo) {
@@ -163,10 +173,9 @@ export default function Autoparco() {
       if (!m.inServizio) acc.fermi += 1
       else if (s.classe === 'badge-malattia') acc.scaduti += 1
       else if (s.classe === 'badge-permesso') acc.inScadenza += 1
-      else acc.regolari += 1
       return acc
     },
-    { regolari: 0, inScadenza: 0, scaduti: 0, fermi: 0 },
+    { inScadenza: 0, scaduti: 0, fermi: 0 },
   )
 
   const annoCorrente = String(new Date().getFullYear())
@@ -174,97 +183,53 @@ export default function Autoparco() {
     .filter((i) => (i.data || '').startsWith(annoCorrente))
     .reduce((t, i) => t + i.costo, 0)
 
-  return (
-    <>
-      <h1 className="page-title">Autoparco</h1>
-      <p className="page-subtitle">
-        Mezzi aziendali: assegnazione agli operai, scadenze di legge e interventi di officina.
-      </p>
+  function dettaglio(mezzo) {
+    const storico = interventi.filter((i) => i.mezzoId === mezzo.id)
+    const spesaTotale = storico.reduce((t, i) => t + i.costo, 0)
 
-      <div className="stat-grid scheda-stat">
-        <div className="stat-card">
-          <span className="stat-value">{mezzi.length}</span>
-          <span className="stat-label">Mezzi in autoparco</span>
+    return (
+      <div className="autoparco-dettaglio">
+        <div className="lista-head">
+          <span className="job-list-label">
+            Scheda {mezzo.targa} · officina {formattaEuro(spesaTotale)}
+          </span>
+          <label className="check-riga">
+            <input
+              type="checkbox"
+              checked={mezzo.inServizio}
+              onChange={(e) => modificaMezzo(mezzo, { inServizio: e.target.checked })}
+            />
+            Mezzo in servizio
+          </label>
         </div>
-        <div className="stat-card">
-          <span className="stat-value stat-ambra">{conteggi.inScadenza}</span>
-          <span className="stat-label">In scadenza (30 gg)</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-rosso">{conteggi.scaduti + conteggi.fermi}</span>
-          <span className="stat-label">Scaduti o fermi</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">{formattaEuro(speseAnno)}</span>
-          <span className="stat-label">Spese officina {annoCorrente}</span>
-        </div>
-      </div>
 
-      <form className="job-form nuovo-lavoro-form" onSubmit={salvaMezzo}>
-        <label className="job-form-label">Nuovo mezzo</label>
         <div className="dpi-riga-form">
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Targa</label>
-            <input
-              type="text"
-              placeholder="AA123BB"
-              value={form.targa}
-              onChange={(e) => setForm({ ...form, targa: e.target.value.toUpperCase() })}
-            />
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Tipo</label>
-            <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
-              {TIPI_MEZZO.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Marca</label>
-            <input
-              type="text"
-              placeholder="Es. Fiat"
-              value={form.marca}
-              onChange={(e) => setForm({ ...form, marca: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Modello</label>
-            <input
-              type="text"
-              placeholder="Es. Ducato"
-              value={form.modello}
-              onChange={(e) => setForm({ ...form, modello: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Anno</label>
-            <input
-              type="number"
-              min="1980"
-              max="2100"
-              placeholder="2019"
-              value={form.anno}
-              onChange={(e) => setForm({ ...form, anno: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Km</label>
-            <input
-              type="number"
-              min="0"
-              value={form.km}
-              onChange={(e) => setForm({ ...form, km: e.target.value })}
-            />
-          </div>
+          {SCADENZE.map((s) => {
+            const stato = statoScadenza(mezzo[s.campo])
+            return (
+              <div className="dpi-campo" key={s.campo}>
+                <label className="job-form-label">{s.etichetta}</label>
+                <input
+                  type="date"
+                  value={mezzo[s.campo] || ''}
+                  onChange={(e) => modificaMezzo(mezzo, { [s.campo]: e.target.value })}
+                />
+                <span className={'badge ' + stato.classe}>
+                  {stato.testo}
+                  {stato.giorni != null &&
+                    stato.testo !== 'In regola' &&
+                    (stato.giorni < 0
+                      ? ` da ${Math.abs(stato.giorni)} gg`
+                      : ` fra ${stato.giorni} gg`)}
+                </span>
+              </div>
+            )
+          })}
           <div className="dpi-campo">
             <label className="job-form-label">In uso a</label>
             <select
-              value={form.assegnatoA}
-              onChange={(e) => setForm({ ...form, assegnatoA: e.target.value })}
+              value={mezzo.assegnatoA}
+              onChange={(e) => modificaMezzo(mezzo, { assegnatoA: e.target.value })}
             >
               <option value="">— non assegnato —</option>
               {dipendenti.map((d) => (
@@ -274,52 +239,275 @@ export default function Autoparco() {
               ))}
             </select>
           </div>
-          <button type="submit">Aggiungi mezzo</button>
-        </div>
-
-        <div className="dpi-riga-form autoparco-scadenze-form">
-          {SCADENZE.map((s) => (
-            <div className="dpi-campo" key={s.campo}>
-              <label className="job-form-label">{s.etichetta} — scade il</label>
-              <input
-                type="date"
-                value={form[s.campo]}
-                onChange={(e) => setForm({ ...form, [s.campo]: e.target.value })}
-              />
-            </div>
-          ))}
-        </div>
-        {errore && <p className="messaggio-errore">{errore}</p>}
-      </form>
-
-      <div className="card sezione">
-        <div className="lista-head">
-          <span className="job-list-label">Mezzi ({righe.length})</span>
-          <div className="upload-riga">
+          <div className="dpi-campo dpi-campo-stretto">
+            <label className="job-form-label">Carburante</label>
             <select
-              className="campo-ricerca"
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
+              value={mezzo.carburante}
+              onChange={(e) => modificaMezzo(mezzo, { carburante: e.target.value })}
             >
-              <option>Tutti</option>
-              <option>In servizio</option>
-              <option>Con scadenze</option>
-              <option>Fuori servizio</option>
+              <option value="">—</option>
+              {CARBURANTI.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
             </select>
-            <input
-              type="search"
-              className="campo-ricerca"
-              placeholder="Cerca targa, modello o operaio..."
-              value={ricerca}
-              onChange={(e) => setRicerca(e.target.value)}
-            />
           </div>
         </div>
 
+        <span className="job-list-label autoparco-sottotitolo">Nuovo intervento di officina</span>
+        <form className="dpi-riga-form" onSubmit={(e) => registraIntervento(e, mezzo)}>
+          <div className="dpi-campo">
+            <label className="job-form-label">Intervento</label>
+            <select
+              value={formIntervento.tipo}
+              onChange={(e) => setFormIntervento({ ...formIntervento, tipo: e.target.value })}
+            >
+              {TIPI_INTERVENTO.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="dpi-campo">
+            <label className="job-form-label">Data</label>
+            <input
+              type="date"
+              value={formIntervento.data}
+              onChange={(e) => setFormIntervento({ ...formIntervento, data: e.target.value })}
+            />
+          </div>
+          <div className="dpi-campo dpi-campo-stretto">
+            <label className="job-form-label">Km</label>
+            <input
+              type="number"
+              min="0"
+              value={formIntervento.km}
+              onChange={(e) => setFormIntervento({ ...formIntervento, km: e.target.value })}
+            />
+          </div>
+          <div className="dpi-campo dpi-campo-stretto">
+            <label className="job-form-label">Costo (€)</label>
+            <input
+              type="number"
+              min="0"
+              step="10"
+              value={formIntervento.costo}
+              onChange={(e) => setFormIntervento({ ...formIntervento, costo: e.target.value })}
+            />
+          </div>
+          <div className="dpi-campo">
+            <label className="job-form-label">Officina</label>
+            <input
+              type="text"
+              placeholder="Nome officina"
+              value={formIntervento.officina}
+              onChange={(e) => setFormIntervento({ ...formIntervento, officina: e.target.value })}
+            />
+          </div>
+          <div className="dpi-campo">
+            <label className="job-form-label">Note</label>
+            <input
+              type="text"
+              placeholder="Cosa è stato fatto"
+              value={formIntervento.note}
+              onChange={(e) => setFormIntervento({ ...formIntervento, note: e.target.value })}
+            />
+          </div>
+          <button type="submit">Registra</button>
+        </form>
+
+        {storico.length === 0 ? (
+          <Vuoto>Nessun intervento registrato su questo mezzo.</Vuoto>
+        ) : (
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Data</th>
+                <th>Km</th>
+                <th>Costo</th>
+                <th>Officina</th>
+                <th>Note</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {storico.map((i) => (
+                <tr key={i.id}>
+                  <td>
+                    <span className="badge badge-in-corso">{i.tipo}</span>
+                  </td>
+                  <td>{formattaData(i.data)}</td>
+                  <td>{i.km ? formattaKm(i.km) : '—'}</td>
+                  <td>{formattaEuro(i.costo)}</td>
+                  <td>{i.officina || '—'}</td>
+                  <td>{i.note || '—'}</td>
+                  <td className="db-azioni-cella">
+                    <button
+                      type="button"
+                      className="riga-elimina"
+                      onClick={() => eliminaIntervento(i)}
+                      aria-label="Elimina intervento"
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <TestataDb
+        titolo="Autoparco"
+        sottotitolo="Mezzi aziendali: chi li usa, scadenze di legge e interventi di officina. Clicca su un mezzo per la sua scheda."
+        azioni={[
+          { testo: '+ Nuovo mezzo', onClick: () => setNuovoAperto((v) => !v), aperto: nuovoAperto },
+        ]}
+      />
+
+      <Riepilogo
+        voci={[
+          { valore: mezzi.length, etichetta: 'Mezzi in autoparco' },
+          {
+            valore: conteggi.inScadenza,
+            etichetta: 'In scadenza (30 gg)',
+            tono: conteggi.inScadenza ? 'ambra' : undefined,
+          },
+          {
+            valore: conteggi.scaduti + conteggi.fermi,
+            etichetta: 'Scaduti o fermi',
+            tono: conteggi.scaduti + conteggi.fermi ? 'rosso' : undefined,
+          },
+          { valore: formattaEuro(speseAnno), etichetta: `Spese officina ${annoCorrente}` },
+        ]}
+      />
+
+      <PannelloNuovo
+        aperto={nuovoAperto}
+        titolo="Nuovo mezzo"
+        onSubmit={salvaMezzo}
+        testoInvio="Aggiungi mezzo"
+        errore={errore}
+      >
+        <Campo etichetta="Targa">
+          <input
+            type="text"
+            placeholder="AA123BB"
+            value={form.targa}
+            onChange={(e) => setForm({ ...form, targa: e.target.value.toUpperCase() })}
+          />
+        </Campo>
+        <Campo etichetta="Tipo">
+          <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })}>
+            {TIPI_MEZZO.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etichetta="Marca">
+          <input
+            type="text"
+            placeholder="Es. Fiat"
+            value={form.marca}
+            onChange={(e) => setForm({ ...form, marca: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Modello">
+          <input
+            type="text"
+            placeholder="Es. Ducato"
+            value={form.modello}
+            onChange={(e) => setForm({ ...form, modello: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Anno">
+          <input
+            type="number"
+            min="1980"
+            max="2100"
+            placeholder="2019"
+            value={form.anno}
+            onChange={(e) => setForm({ ...form, anno: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Km">
+          <input
+            type="number"
+            min="0"
+            value={form.km}
+            onChange={(e) => setForm({ ...form, km: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Carburante">
+          <select
+            value={form.carburante}
+            onChange={(e) => setForm({ ...form, carburante: e.target.value })}
+          >
+            {CARBURANTI.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etichetta="In uso a">
+          <select
+            value={form.assegnatoA}
+            onChange={(e) => setForm({ ...form, assegnatoA: e.target.value })}
+          >
+            <option value="">— non assegnato —</option>
+            {dipendenti.map((d) => (
+              <option key={d.id} value={d.nome}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        {SCADENZE.map((s) => (
+          <Campo etichetta={`${s.etichetta} — scade il`} key={s.campo}>
+            <input
+              type="date"
+              value={form[s.campo]}
+              onChange={(e) => setForm({ ...form, [s.campo]: e.target.value })}
+            />
+          </Campo>
+        ))}
+      </PannelloNuovo>
+
+      <div className="card sezione">
+        <Strumenti
+          titolo="Mezzi"
+          mostrati={righe.length}
+          totali={mezzi.length}
+          ricerca={ricerca}
+          onRicerca={setRicerca}
+          segnaposto="Cerca targa, modello o operaio..."
+        >
+          <select className="db-filtro" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+            {FILTRI.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
+        </Strumenti>
+
         {righe.length === 0 ? (
-          <p className="job-list-empty">
-            Nessun mezzo in autoparco: aggiungi il primo dal riquadro qui sopra.
-          </p>
+          <Vuoto>
+            {mezzi.length === 0
+              ? 'Nessun mezzo in autoparco: aggiungi il primo con “+ Nuovo mezzo”.'
+              : 'Nessun mezzo trovato.'}
+          </Vuoto>
         ) : (
           <table className="task-table">
             <thead>
@@ -337,240 +525,60 @@ export default function Autoparco() {
             </thead>
             <tbody>
               {righe.map((m) => (
-                <tr key={m.id}>
-                  <td className="cliente-nome-link targa-cella">{m.targa}</td>
-                  <td>
-                    {m.marca} {m.modello}
-                    <span className="riga-sub">
-                      {m.tipo}
-                      {m.anno ? ` · ${m.anno}` : ''}
-                    </span>
-                  </td>
-                  <td>{formattaKm(m.km)}</td>
-                  <td>{m.assegnatoA || '—'}</td>
-                  {SCADENZE.map((s) => {
-                    const stato = statoScadenza(m[s.campo])
-                    return (
-                      <td key={s.campo}>
-                        <span className={'scadenza-data ' + stato.classe}>
-                          {formattaData(m[s.campo])}
-                        </span>
-                      </td>
-                    )
-                  })}
-                  <td>
-                    <span className={'badge ' + m.stato.classe}>{m.stato.testo}</span>
-                  </td>
-                  <td className="autoparco-azioni">
-                    <button
-                      type="button"
-                      className="btn-apri"
-                      onClick={() => {
-                        setApertoId(apertoId === m.id ? null : m.id)
-                        setFormIntervento({ ...INTERVENTO_VUOTO, km: m.km })
-                      }}
-                    >
-                      {apertoId === m.id ? 'Chiudi' : 'Scheda'}
-                    </button>
-                    <button
-                      type="button"
-                      className="riga-elimina"
-                      onClick={() => eliminaMezzo(m)}
-                      aria-label="Elimina mezzo"
-                    >
-                      ×
-                    </button>
-                  </td>
-                </tr>
+                <Fragment key={m.id}>
+                  <tr
+                    className={'db-riga' + (apertoId === m.id ? ' db-riga-aperta' : '')}
+                    onClick={() => apriScheda(m)}
+                    title="Apri la scheda del mezzo"
+                  >
+                    <td className="cliente-nome-link targa-cella">{m.targa}</td>
+                    <td>
+                      {m.marca} {m.modello}
+                      <span className="riga-sub">
+                        {m.tipo}
+                        {m.anno ? ` · ${m.anno}` : ''}
+                      </span>
+                    </td>
+                    <td>{formattaKm(m.km)}</td>
+                    <td>{m.assegnatoA || '—'}</td>
+                    {SCADENZE.map((s) => {
+                      const stato = statoScadenza(m[s.campo])
+                      return (
+                        <td key={s.campo}>
+                          <span className={'scadenza-data ' + stato.classe}>
+                            {formattaData(m[s.campo])}
+                          </span>
+                        </td>
+                      )
+                    })}
+                    <td>
+                      <span className={'badge ' + m.stato.classe}>{m.stato.testo}</span>
+                    </td>
+                    <td className="db-azioni-cella">
+                      <button
+                        type="button"
+                        className="riga-elimina"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          eliminaMezzo(m)
+                        }}
+                        aria-label="Elimina mezzo"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                  {apertoId === m.id && (
+                    <tr className="db-dettaglio">
+                      <td colSpan={10}>{dettaglio(m)}</td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
         )}
       </div>
-
-      {apertoId &&
-        (() => {
-          const mezzo = mezzi.find((m) => m.id === apertoId)
-          if (!mezzo) return null
-          const storico = interventi.filter((i) => i.mezzoId === mezzo.id)
-          const spesaTotale = storico.reduce((t, i) => t + i.costo, 0)
-
-          return (
-            <div className="card sezione dettaglio-consuntivo">
-              <div className="lista-head">
-                <span className="job-list-label">
-                  {mezzo.targa} · {mezzo.marca} {mezzo.modello} · officina {formattaEuro(spesaTotale)}
-                </span>
-                <label className="check-riga">
-                  <input
-                    type="checkbox"
-                    checked={mezzo.inServizio}
-                    onChange={(e) => modificaMezzo(mezzo, { inServizio: e.target.checked })}
-                  />
-                  Mezzo in servizio
-                </label>
-              </div>
-
-              <div className="dpi-riga-form">
-                {SCADENZE.map((s) => {
-                  const stato = statoScadenza(mezzo[s.campo])
-                  return (
-                    <div className="dpi-campo" key={s.campo}>
-                      <label className="job-form-label">{s.etichetta}</label>
-                      <input
-                        type="date"
-                        value={mezzo[s.campo] || ''}
-                        onChange={(e) => modificaMezzo(mezzo, { [s.campo]: e.target.value })}
-                      />
-                      <span className={'badge ' + stato.classe}>
-                        {stato.testo}
-                        {stato.giorni != null &&
-                          stato.testo !== 'In regola' &&
-                          (stato.giorni < 0
-                            ? ` da ${Math.abs(stato.giorni)} gg`
-                            : ` fra ${stato.giorni} gg`)}
-                      </span>
-                    </div>
-                  )
-                })}
-                <div className="dpi-campo">
-                  <label className="job-form-label">In uso a</label>
-                  <select
-                    value={mezzo.assegnatoA}
-                    onChange={(e) => modificaMezzo(mezzo, { assegnatoA: e.target.value })}
-                  >
-                    <option value="">— non assegnato —</option>
-                    {dipendenti.map((d) => (
-                      <option key={d.id} value={d.nome}>
-                        {d.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="dpi-campo dpi-campo-stretto">
-                  <label className="job-form-label">Carburante</label>
-                  <select
-                    value={mezzo.carburante}
-                    onChange={(e) => modificaMezzo(mezzo, { carburante: e.target.value })}
-                  >
-                    <option value="">—</option>
-                    {CARBURANTI.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <form className="dpi-riga-form" onSubmit={(e) => registraIntervento(e, mezzo)}>
-                <div className="dpi-campo">
-                  <label className="job-form-label">Intervento</label>
-                  <select
-                    value={formIntervento.tipo}
-                    onChange={(e) => setFormIntervento({ ...formIntervento, tipo: e.target.value })}
-                  >
-                    {TIPI_INTERVENTO.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="dpi-campo">
-                  <label className="job-form-label">Data</label>
-                  <input
-                    type="date"
-                    value={formIntervento.data}
-                    onChange={(e) => setFormIntervento({ ...formIntervento, data: e.target.value })}
-                  />
-                </div>
-                <div className="dpi-campo dpi-campo-stretto">
-                  <label className="job-form-label">Km</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formIntervento.km}
-                    onChange={(e) => setFormIntervento({ ...formIntervento, km: e.target.value })}
-                  />
-                </div>
-                <div className="dpi-campo dpi-campo-stretto">
-                  <label className="job-form-label">Costo (€)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="10"
-                    value={formIntervento.costo}
-                    onChange={(e) => setFormIntervento({ ...formIntervento, costo: e.target.value })}
-                  />
-                </div>
-                <div className="dpi-campo">
-                  <label className="job-form-label">Officina</label>
-                  <input
-                    type="text"
-                    placeholder="Nome officina"
-                    value={formIntervento.officina}
-                    onChange={(e) =>
-                      setFormIntervento({ ...formIntervento, officina: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="dpi-campo">
-                  <label className="job-form-label">Note</label>
-                  <input
-                    type="text"
-                    placeholder="Cosa è stato fatto"
-                    value={formIntervento.note}
-                    onChange={(e) => setFormIntervento({ ...formIntervento, note: e.target.value })}
-                  />
-                </div>
-                <button type="submit">Registra</button>
-              </form>
-
-              {storico.length === 0 ? (
-                <p className="job-list-empty">Nessun intervento registrato su questo mezzo.</p>
-              ) : (
-                <table className="task-table">
-                  <thead>
-                    <tr>
-                      <th>Tipo</th>
-                      <th>Data</th>
-                      <th>Km</th>
-                      <th>Costo</th>
-                      <th>Officina</th>
-                      <th>Note</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {storico.map((i) => (
-                      <tr key={i.id}>
-                        <td>
-                          <span className="badge badge-in-corso">{i.tipo}</span>
-                        </td>
-                        <td>{formattaData(i.data)}</td>
-                        <td>{i.km ? formattaKm(i.km) : '—'}</td>
-                        <td>{formattaEuro(i.costo)}</td>
-                        <td>{i.officina || '—'}</td>
-                        <td>{i.note || '—'}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className="riga-elimina"
-                            onClick={() => eliminaIntervento(i)}
-                            aria-label="Elimina intervento"
-                          >
-                            ×
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          )
-        })()}
 
       {dialogo}
     </>

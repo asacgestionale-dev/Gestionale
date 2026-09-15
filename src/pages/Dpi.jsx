@@ -11,10 +11,10 @@ import {
   calcolaScadenza,
   statoConsegna,
 } from '../data/dpi'
+import { TestataDb, Riepilogo, PannelloNuovo, Campo, Strumenti, Vuoto } from '../components/Database'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
-import './Consuntivazione.css'
 import './Dpi.css'
 
 function oggiISO() {
@@ -28,13 +28,16 @@ function formattaData(iso) {
 
 const DPI_VUOTO = { nome: '', categoria: CATEGORIE_DPI[0], norma: '', durataMesi: 12, note: '' }
 const CONSEGNA_VUOTA = { dpiId: '', dipendente: '', taglia: '', dataConsegna: oggiISO(), note: '' }
+const FILTRI = ['Tutte', 'Valido', 'In scadenza', 'Scaduto']
 
 export default function Dpi() {
   const [catalogo, setCatalogo] = useState([])
   const [consegne, setConsegne] = useState([])
   const [dipendenti, setDipendenti] = useState([])
+  const [pannello, setPannello] = useState(null) // 'consegna' | 'dispositivo' | null
   const [formDpi, setFormDpi] = useState(DPI_VUOTO)
   const [formConsegna, setFormConsegna] = useState(CONSEGNA_VUOTA)
+  const [errore, setErrore] = useState('')
   const [ricerca, setRicerca] = useState('')
   const [filtro, setFiltro] = useState('Tutte')
   const { chiedi, dialogo } = useConferma()
@@ -52,12 +55,18 @@ export default function Dpi() {
 
   const nomeDpi = (id) => catalogo.find((d) => d.id === id)?.nome || '—'
 
+  function commuta(quale) {
+    setErrore('')
+    setPannello(pannello === quale ? null : quale)
+  }
+
   async function aggiungiDpi(e) {
     e.preventDefault()
-    if (!formDpi.nome.trim()) return
+    if (!formDpi.nome.trim()) return setErrore('Indica il nome del dispositivo.')
     await salvaDpiSuDb(formDpi)
-    await ricarica()
     setFormDpi(DPI_VUOTO)
+    setPannello(null)
+    await ricarica()
   }
 
   function eliminaDpi(dpi) {
@@ -73,14 +82,17 @@ export default function Dpi() {
 
   async function registraConsegna(e) {
     e.preventDefault()
-    if (!formConsegna.dpiId || !formConsegna.dipendente) return
+    if (!formConsegna.dpiId || !formConsegna.dipendente) {
+      return setErrore('Scegli il dispositivo e il dipendente.')
+    }
     const dpi = catalogo.find((d) => d.id === formConsegna.dpiId)
     await aggiungiConsegna({
       ...formConsegna,
       scadenza: calcolaScadenza(formConsegna.dataConsegna, dpi?.durataMesi),
     })
-    await ricarica()
     setFormConsegna({ ...CONSEGNA_VUOTA, dataConsegna: formConsegna.dataConsegna })
+    setPannello(null)
+    await ricarica()
   }
 
   function eliminaConsegna(consegna) {
@@ -100,9 +112,9 @@ export default function Dpi() {
     .filter((c) => {
       if (filtro !== 'Tutte' && c.stato.testo !== filtro) return false
       if (!q) return true
-      return [c.dipendente, nomeDpi(c.dpiId), c.taglia].filter(Boolean).some((v) =>
-        v.toLowerCase().includes(q),
-      )
+      return [c.dipendente, nomeDpi(c.dpiId), c.taglia]
+        .filter(Boolean)
+        .some((v) => v.toLowerCase().includes(q))
     })
     .sort((a, b) => (a.scadenza || '').localeCompare(b.scadenza || ''))
 
@@ -119,104 +131,160 @@ export default function Dpi() {
 
   return (
     <>
-      <h1 className="page-title">Anagrafica DPI</h1>
-      <p className="page-subtitle">
-        Dispositivi di protezione individuale: catalogo, consegne al personale e scadenze.
-      </p>
+      <TestataDb
+        titolo="Anagrafica DPI"
+        sottotitolo="Dispositivi di protezione: catalogo, consegne al personale e scadenze."
+        azioni={[
+          {
+            testo: '+ Nuova consegna',
+            onClick: () => commuta('consegna'),
+            aperto: pannello === 'consegna',
+          },
+          {
+            testo: '+ Nuovo dispositivo',
+            onClick: () => commuta('dispositivo'),
+            aperto: pannello === 'dispositivo',
+            secondaria: true,
+          },
+        ]}
+      />
 
-      <div className="stat-grid scheda-stat">
-        <div className="stat-card">
-          <span className="stat-value">{catalogo.length}</span>
-          <span className="stat-label">Dispositivi a catalogo</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-verde">{conteggi.validi}</span>
-          <span className="stat-label">Consegne valide</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-ambra">{conteggi.inScadenza}</span>
-          <span className="stat-label">In scadenza (30 gg)</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-rosso">{conteggi.scaduti}</span>
-          <span className="stat-label">Scaduti</span>
-        </div>
-      </div>
+      <Riepilogo
+        voci={[
+          { valore: catalogo.length, etichetta: 'Dispositivi a catalogo' },
+          { valore: conteggi.validi, etichetta: 'Consegne valide', tono: 'verde' },
+          {
+            valore: conteggi.inScadenza,
+            etichetta: 'In scadenza (30 gg)',
+            tono: conteggi.inScadenza ? 'ambra' : undefined,
+          },
+          {
+            valore: conteggi.scaduti,
+            etichetta: 'Scaduti',
+            tono: conteggi.scaduti ? 'rosso' : undefined,
+          },
+        ]}
+      />
 
-      <form className="job-form nuovo-lavoro-form" onSubmit={registraConsegna}>
-        <label className="job-form-label">Consegna a un dipendente</label>
-        <div className="dpi-riga-form">
-          <div className="dpi-campo">
-            <label className="job-form-label">Dispositivo</label>
-            <select
-              value={formConsegna.dpiId}
-              onChange={(e) => setFormConsegna({ ...formConsegna, dpiId: e.target.value })}
-            >
-              <option value="">— scegli —</option>
-              {catalogo.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Dipendente</label>
-            <select
-              value={formConsegna.dipendente}
-              onChange={(e) => setFormConsegna({ ...formConsegna, dipendente: e.target.value })}
-            >
-              <option value="">— scegli —</option>
-              {dipendenti.map((d) => (
-                <option key={d.id} value={d.nome}>
-                  {d.nome}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Taglia</label>
-            <input
-              type="text"
-              placeholder="Es. 43, L"
-              value={formConsegna.taglia}
-              onChange={(e) => setFormConsegna({ ...formConsegna, taglia: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Data consegna</label>
-            <input
-              type="date"
-              value={formConsegna.dataConsegna}
-              onChange={(e) => setFormConsegna({ ...formConsegna, dataConsegna: e.target.value })}
-            />
-          </div>
-          <button type="submit">Registra consegna</button>
-        </div>
-      </form>
+      <PannelloNuovo
+        aperto={pannello === 'consegna'}
+        titolo="Consegna a un dipendente"
+        onSubmit={registraConsegna}
+        testoInvio="Registra consegna"
+        errore={errore}
+      >
+        <Campo etichetta="Dispositivo" largo>
+          <select
+            value={formConsegna.dpiId}
+            onChange={(e) => setFormConsegna({ ...formConsegna, dpiId: e.target.value })}
+          >
+            <option value="">— scegli —</option>
+            {catalogo.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etichetta="Dipendente">
+          <select
+            value={formConsegna.dipendente}
+            onChange={(e) => setFormConsegna({ ...formConsegna, dipendente: e.target.value })}
+          >
+            <option value="">— scegli —</option>
+            {dipendenti.map((d) => (
+              <option key={d.id} value={d.nome}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etichetta="Taglia">
+          <input
+            type="text"
+            placeholder="Es. 43, L"
+            value={formConsegna.taglia}
+            onChange={(e) => setFormConsegna({ ...formConsegna, taglia: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Data consegna">
+          <input
+            type="date"
+            value={formConsegna.dataConsegna}
+            onChange={(e) => setFormConsegna({ ...formConsegna, dataConsegna: e.target.value })}
+          />
+        </Campo>
+      </PannelloNuovo>
+
+      <PannelloNuovo
+        aperto={pannello === 'dispositivo'}
+        titolo="Nuovo dispositivo a catalogo"
+        onSubmit={aggiungiDpi}
+        testoInvio="Aggiungi al catalogo"
+        errore={errore}
+      >
+        <Campo etichetta="Denominazione" largo>
+          <input
+            type="text"
+            placeholder="Es. Occhiali di protezione"
+            value={formDpi.nome}
+            onChange={(e) => setFormDpi({ ...formDpi, nome: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Categoria">
+          <select
+            value={formDpi.categoria}
+            onChange={(e) => setFormDpi({ ...formDpi, categoria: e.target.value })}
+          >
+            {CATEGORIE_DPI.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etichetta="Norma">
+          <input
+            type="text"
+            placeholder="EN ..."
+            value={formDpi.norma}
+            onChange={(e) => setFormDpi({ ...formDpi, norma: e.target.value })}
+          />
+        </Campo>
+        <Campo etichetta="Validità (mesi)">
+          <input
+            type="number"
+            min="0"
+            value={formDpi.durataMesi}
+            onChange={(e) => setFormDpi({ ...formDpi, durataMesi: e.target.value })}
+          />
+        </Campo>
+      </PannelloNuovo>
 
       <div className="card sezione">
-        <div className="lista-head">
-          <span className="job-list-label">Consegne ({consegneFiltrate.length})</span>
-          <div className="upload-riga">
-            <select className="campo-ricerca" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
-              <option>Tutte</option>
-              <option>Valido</option>
-              <option>In scadenza</option>
-              <option>Scaduto</option>
-            </select>
-            <input
-              type="search"
-              className="campo-ricerca"
-              placeholder="Cerca dipendente o DPI..."
-              value={ricerca}
-              onChange={(e) => setRicerca(e.target.value)}
-            />
-          </div>
-        </div>
+        <Strumenti
+          titolo="Consegne"
+          mostrati={consegneFiltrate.length}
+          totali={consegne.length}
+          ricerca={ricerca}
+          onRicerca={setRicerca}
+          segnaposto="Cerca dipendente o DPI..."
+        >
+          <select className="db-filtro" value={filtro} onChange={(e) => setFiltro(e.target.value)}>
+            {FILTRI.map((f) => (
+              <option key={f} value={f}>
+                {f === 'Tutte' ? 'Tutte le consegne' : f}
+              </option>
+            ))}
+          </select>
+        </Strumenti>
 
         {consegneFiltrate.length === 0 ? (
-          <p className="job-list-empty">Nessuna consegna registrata.</p>
+          <Vuoto>
+            {consegne.length === 0
+              ? 'Nessuna consegna registrata: usa “+ Nuova consegna”.'
+              : 'Nessuna consegna trovata.'}
+          </Vuoto>
         ) : (
           <table className="task-table">
             <thead>
@@ -250,7 +318,7 @@ export default function Dpi() {
                   <td>
                     <span className={'badge ' + c.stato.classe}>{c.stato.testo}</span>
                   </td>
-                  <td>
+                  <td className="db-azioni-cella">
                     <button
                       type="button"
                       className="riga-elimina"
@@ -267,90 +335,47 @@ export default function Dpi() {
         )}
       </div>
 
-      <form className="job-form nuovo-lavoro-form" onSubmit={aggiungiDpi}>
-        <label className="job-form-label">Nuovo dispositivo a catalogo</label>
-        <div className="dpi-riga-form">
-          <div className="dpi-campo">
-            <label className="job-form-label">Denominazione</label>
-            <input
-              type="text"
-              placeholder="Es. Occhiali di protezione"
-              value={formDpi.nome}
-              onChange={(e) => setFormDpi({ ...formDpi, nome: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo">
-            <label className="job-form-label">Categoria</label>
-            <select
-              value={formDpi.categoria}
-              onChange={(e) => setFormDpi({ ...formDpi, categoria: e.target.value })}
-            >
-              {CATEGORIE_DPI.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Norma</label>
-            <input
-              type="text"
-              placeholder="EN ..."
-              value={formDpi.norma}
-              onChange={(e) => setFormDpi({ ...formDpi, norma: e.target.value })}
-            />
-          </div>
-          <div className="dpi-campo dpi-campo-stretto">
-            <label className="job-form-label">Validità (mesi)</label>
-            <input
-              type="number"
-              min="0"
-              value={formDpi.durataMesi}
-              onChange={(e) => setFormDpi({ ...formDpi, durataMesi: e.target.value })}
-            />
-          </div>
-          <button type="submit">Aggiungi</button>
-        </div>
-      </form>
-
       <div className="card sezione">
-        <span className="job-list-label">Catalogo DPI ({catalogo.length})</span>
-        <table className="task-table">
-          <thead>
-            <tr>
-              <th>Dispositivo</th>
-              <th>Categoria</th>
-              <th>Norma</th>
-              <th>Validità</th>
-              <th>In uso</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {catalogo.map((d) => (
-              <tr key={d.id}>
-                <td className="cliente-nome-link">{d.nome}</td>
-                <td>
-                  <span className="badge badge-in-corso">{d.categoria}</span>
-                </td>
-                <td>{d.norma || '—'}</td>
-                <td>{d.durataMesi ? `${d.durataMesi} mesi` : '—'}</td>
-                <td>{consegne.filter((c) => c.dpiId === d.id).length}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="riga-elimina"
-                    onClick={() => eliminaDpi(d)}
-                    aria-label="Elimina dispositivo"
-                  >
-                    ×
-                  </button>
-                </td>
+        <Strumenti titolo="Catalogo DPI" mostrati={catalogo.length} />
+        {catalogo.length === 0 ? (
+          <Vuoto>Catalogo vuoto: aggiungi i dispositivi con “+ Nuovo dispositivo”.</Vuoto>
+        ) : (
+          <table className="task-table">
+            <thead>
+              <tr>
+                <th>Dispositivo</th>
+                <th>Categoria</th>
+                <th>Norma</th>
+                <th>Validità</th>
+                <th>In uso</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {catalogo.map((d) => (
+                <tr key={d.id}>
+                  <td className="cliente-nome-link">{d.nome}</td>
+                  <td>
+                    <span className="badge badge-in-corso">{d.categoria}</span>
+                  </td>
+                  <td>{d.norma || '—'}</td>
+                  <td>{d.durataMesi ? `${d.durataMesi} mesi` : '—'}</td>
+                  <td>{consegne.filter((c) => c.dpiId === d.id).length}</td>
+                  <td className="db-azioni-cella">
+                    <button
+                      type="button"
+                      className="riga-elimina"
+                      onClick={() => eliminaDpi(d)}
+                      aria-label="Elimina dispositivo"
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {dialogo}

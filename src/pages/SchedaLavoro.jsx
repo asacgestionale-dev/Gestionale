@@ -10,10 +10,17 @@ import {
 } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
 import { SQUADRE_BASE } from '../data/squadre'
+import { caricaFatture, economiaLavoro } from '../data/fatture'
+import { caricaPagamenti } from '../data/pagamenti'
+import { caricaEconomia } from '../data/impostazioni'
+import { FASI, PROSSIMA_AZIONE, faseLavoro } from '../data/statoLavoro'
 import InputIndirizzo from '../components/InputIndirizzo'
+import EconomiaLavoro from '../components/EconomiaLavoro'
+import { Riepilogo } from '../components/Database'
 import { useConferma } from '../components/useConferma'
 import './NuovoLavoro.css'
 import './SchedaCliente.css'
+import './Lavori.css'
 
 // i lavori salvati prima usavano l'ora piena, ora si conservano i minuti
 function orarioAssegnato(assegnato) {
@@ -23,11 +30,56 @@ function orarioAssegnato(assegnato) {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
+function formattaData(iso) {
+  return iso ? new Date(iso).toLocaleDateString('it-IT') : '—'
+}
+
+function vaiA(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+// Il pulsante che porta al passo successivo del lavoro.
+function AzioneFase({ fase, idLavoro }) {
+  switch (fase.id) {
+    case 'da-pianificare':
+    case 'pianificato':
+      return (
+        <Link to="/assegnazione-lavori" className="db-btn">
+          Apri Assegnazione
+        </Link>
+      )
+    case 'eseguito':
+    case 'da-validare':
+      return (
+        <Link to={`/consuntivazione?lavoro=${idLavoro}`} className="db-btn">
+          Apri il rapportino
+        </Link>
+      )
+    case 'da-fatturare':
+      return (
+        <button type="button" className="db-btn" onClick={() => vaiA('economia')}>
+          Emetti fattura
+        </button>
+      )
+    case 'da-incassare':
+      return (
+        <button type="button" className="db-btn" onClick={() => vaiA('economia')}>
+          Registra incasso
+        </button>
+      )
+    default:
+      return null
+  }
+}
+
 export default function SchedaLavoro() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [lavori, setLavori] = useState([])
   const [clienti, setClienti] = useState([])
+  const [fatture, setFatture] = useState([])
+  const [pagamenti, setPagamenti] = useState({})
+  const [costoOrario, setCostoOrario] = useState(0)
   const [materiale, setMateriale] = useState('')
   const [salvato, setSalvato] = useState(false)
   const [caricamento, setCaricamento] = useState(true)
@@ -36,12 +88,27 @@ export default function SchedaLavoro() {
   const { chiedi, dialogo } = useConferma()
 
   useEffect(() => {
-    Promise.all([caricaLavori(), caricaClienti()]).then(([l, c]) => {
+    Promise.all([
+      caricaLavori(),
+      caricaClienti(),
+      caricaFatture(),
+      caricaPagamenti(),
+      caricaEconomia(),
+    ]).then(([l, c, f, p, eco]) => {
       setLavori(l)
       setClienti(c)
+      setFatture(f)
+      setPagamenti(p)
+      setCostoOrario(eco.costoOrario)
       setCaricamento(false)
     })
   }, [])
+
+  async function ricaricaSoldi() {
+    const [f, p] = await Promise.all([caricaFatture(), caricaPagamenti()])
+    setFatture(f)
+    setPagamenti(p)
+  }
 
   const lavoro = lavori.find((l) => l.id === id)
 
@@ -102,7 +169,7 @@ export default function SchedaLavoro() {
   function elimina() {
     chiedi({
       titolo: 'Eliminare il lavoro?',
-      messaggio: `"${lavoro.titolo}" verrà rimosso definitivamente, con la sua pianificazione e il consuntivo.`,
+      messaggio: `"${lavoro.titolo}" verrà rimosso definitivamente, con pianificazione, rapportino, fatture e incassi.`,
       onConferma: async () => {
         await eliminaLavoro(id)
         navigate('/lavori')
@@ -126,17 +193,37 @@ export default function SchedaLavoro() {
       <>
         <h1 className="page-title">Lavoro non trovato</h1>
         <p className="page-subtitle">
-          <Link to="/lavori">Torna all'archivio lavori</Link>
+          <Link to="/lavori">Torna ai lavori</Link>
         </p>
       </>
     )
   }
 
   const cliente = clienti.find((c) => c.id === lavoro.clienteId)
-  const squadra = lavoro.assegnato
+  const squadra = lavoro.assegnato?.teamId
     ? SQUADRE_BASE.find((s) => s.id === lavoro.assegnato.teamId)
     : null
-  const residuo = (lavoro.importo || 0) - (lavoro.incassato || 0)
+  const economia = economiaLavoro(lavoro, fatture, pagamenti, costoOrario)
+  const fase = faseLavoro(lavoro, economia)
+  const c = lavoro.consuntivo
+
+  const pianificazione =
+    squadra && lavoro.assegnato?.data
+      ? `${squadra.nome} · ${new Date(lavoro.assegnato.data).toLocaleDateString('it-IT', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        })} alle ${orarioAssegnato(lavoro.assegnato)}`
+      : 'non ancora pianificato'
+
+  const tonoMargine =
+    economia.marginePct == null
+      ? undefined
+      : economia.margine < 0
+        ? 'rosso'
+        : economia.marginePct < 20
+          ? 'ambra'
+          : 'verde'
 
   return (
     <>
@@ -144,19 +231,75 @@ export default function SchedaLavoro() {
         <div>
           <h1 className="page-title">{lavoro.titolo}</h1>
           <p className="page-subtitle">
-            Scheda lavoro {cliente && `· ${cliente.nome}`}
+            {cliente ? cliente.nome : 'Senza cliente'} · {pianificazione}
             {salvato && <span className="salvato-tag">Modifiche salvate</span>}
           </p>
         </div>
         <div className="azioni-scheda">
           <Link to="/lavori" className="vai-assegnazione">
-            ← Torna all'archivio
+            ← Tutti i lavori
           </Link>
           <Link to="/assegnazione-lavori" className="vai-assegnazione">
             Assegnazione Lavori →
           </Link>
         </div>
       </div>
+
+      <div className="card percorso-card">
+        <ol className="percorso">
+          {FASI.map((f, i) => (
+            <li
+              key={f.id}
+              className={
+                'passo ' +
+                (i < fase.ordine ? 'passo-fatto' : i === fase.ordine ? 'passo-attuale' : 'passo-futuro')
+              }
+            >
+              <span className="passo-pallino">{i < fase.ordine ? '✓' : i + 1}</span>
+              <span className="passo-nome">{f.titolo}</span>
+            </li>
+          ))}
+        </ol>
+        <div className="percorso-azione">
+          <span>
+            <strong>{fase.titolo}</strong>
+            {fase.dettaglio && (
+              <span className={fase.avviso ? 'db-rosso' : 'db-muto'}> · {fase.dettaglio}</span>
+            )}{' '}
+            — {PROSSIMA_AZIONE[fase.id]}
+          </span>
+          <AzioneFase fase={fase} idLavoro={lavoro.id} />
+        </div>
+      </div>
+
+      <Riepilogo
+        voci={[
+          { valore: formattaEuro(economia.importo), etichetta: 'Importo concordato', nota: 'IVA esclusa' },
+          {
+            valore: formattaEuro(economia.fatturato),
+            etichetta: 'Fatturato',
+            nota: economia.daFatturare > 0 ? `da fatturare ${formattaEuro(economia.daFatturare)}` : null,
+          },
+          {
+            valore: formattaEuro(economia.incassato),
+            etichetta: 'Incassato',
+            tono: 'verde',
+            nota:
+              economia.daIncassare > 0
+                ? `da incassare ${formattaEuro(economia.daIncassare)}`
+                : null,
+          },
+          {
+            valore: formattaEuro(economia.margine),
+            etichetta: economia.stimata ? 'Margine stimato' : 'Margine',
+            tono: tonoMargine,
+            nota:
+              economia.marginePct != null
+                ? `${economia.marginePct}% · costi ${formattaEuro(economia.costi)}`
+                : null,
+          },
+        ]}
+      />
 
       {lavoro.appuntamento && (
         <div className="card appuntamento-scheda">
@@ -251,32 +394,8 @@ export default function SchedaLavoro() {
         </div>
       )}
 
-      <div className="stat-grid scheda-stat">
-        <div className="stat-card">
-          <span className="stat-value">{formattaEuro(lavoro.importo)}</span>
-          <span className="stat-label">Importo</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-verde">{formattaEuro(lavoro.incassato)}</span>
-          <span className="stat-label">Incassato</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value stat-rosso">{formattaEuro(residuo)}</span>
-          <span className="stat-label">Da incassare</span>
-        </div>
-        <div className="stat-card">
-          <span className="stat-value">
-            {squadra
-              ? orarioAssegnato(lavoro.assegnato)
-              : lavoro.completato
-                ? 'Svolto'
-                : '—'}
-          </span>
-          <span className="stat-label">{squadra ? squadra.nome : 'Non assegnato'}</span>
-        </div>
-      </div>
-
       <form className="job-form nuovo-lavoro-form" onSubmit={(e) => e.preventDefault()}>
+        <label className="job-form-label">Dati del lavoro</label>
         <div className="form-griglia">
           <div className="form-colonna">
             <label className="job-form-label">Cliente</label>
@@ -285,9 +404,9 @@ export default function SchedaLavoro() {
               onChange={(e) => aggiorna({ clienteId: e.target.value })}
             >
               <option value="">— nessun cliente —</option>
-              {clienti.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
+              {clienti.map((cl) => (
+                <option key={cl.id} value={cl.id}>
+                  {cl.nome}
                 </option>
               ))}
             </select>
@@ -321,7 +440,7 @@ export default function SchedaLavoro() {
           </div>
 
           <div className="form-colonna">
-            <label className="job-form-label">Materiali</label>
+            <label className="job-form-label">Materiali previsti</label>
             <div className="materiale-riga">
               <input
                 type="text"
@@ -371,7 +490,7 @@ export default function SchedaLavoro() {
               </a>
             )}
 
-            <label className="job-form-label">Importo concordato (€)</label>
+            <label className="job-form-label">Importo concordato (€, IVA esclusa)</label>
             <input
               type="number"
               min="0"
@@ -380,32 +499,21 @@ export default function SchedaLavoro() {
               onChange={(e) => aggiorna({ importo: Number(e.target.value) || 0 })}
             />
 
-            <label className="job-form-label">Incassato (€)</label>
-            <input
-              type="number"
-              min="0"
-              step="10"
-              value={lavoro.incassato || 0}
-              onChange={(e) => aggiorna({ incassato: Number(e.target.value) || 0 })}
-            />
-
-            <label className="job-form-label">Stato</label>
-            <label className="check-riga">
-              <input
-                type="checkbox"
-                checked={!!lavoro.completato}
-                onChange={(e) => aggiorna({ completato: e.target.checked })}
-              />
-              Lavoro svolto
-            </label>
-            {lavoro.assegnato && (
-              <button
-                type="button"
-                className="gps-btn"
-                onClick={() => aggiorna({ assegnato: null })}
-              >
-                Rimuovi dalla pianificazione
-              </button>
+            {lavoro.chiuso ? (
+              <p className="gps-stato gps-ok">
+                Lavoro chiuso il {formattaData(lavoro.validatoIl)}. Per riaprirlo usa
+                Consuntivazione.
+              </p>
+            ) : (
+              lavoro.assegnato && (
+                <button
+                  type="button"
+                  className="gps-btn"
+                  onClick={() => aggiorna({ assegnato: null })}
+                >
+                  Rimuovi dalla pianificazione
+                </button>
+              )
             )}
           </div>
         </div>
@@ -414,6 +522,56 @@ export default function SchedaLavoro() {
           Elimina lavoro
         </button>
       </form>
+
+      {c && (
+        <div className="card sezione">
+          <div className="lista-head">
+            <span className="job-list-label">Rapportino della squadra</span>
+            <Link to={`/consuntivazione?lavoro=${lavoro.id}`} className="vai-assegnazione">
+              {lavoro.chiuso ? 'Vedi in Consuntivazione →' : 'Valida in Consuntivazione →'}
+            </Link>
+          </div>
+          <div className="rapportino-griglia">
+            <div>
+              <span className="dato-label">Eseguito da</span>
+              <span className="dato-valore">{c.compilatoDa || '—'}</span>
+            </div>
+            <div>
+              <span className="dato-label">Ore</span>
+              <span className="dato-valore">
+                {c.oreEffettive} h effettive · {lavoro.durata} h previste
+              </span>
+            </div>
+            <div>
+              <span className="dato-label">Materiali usati</span>
+              <span className="dato-valore">{(c.materialiUsati || []).join(', ') || '—'}</span>
+            </div>
+            <div>
+              <span className="dato-label">Note dell'operaio</span>
+              <span className="dato-valore">{c.noteOperaio || '—'}</span>
+            </div>
+          </div>
+          <p className={'gps-stato' + (c.rifiutato ? ' db-rosso' : '')}>
+            {lavoro.chiuso
+              ? `Validato il ${formattaData(lavoro.validatoIl)}.`
+              : c.rifiutato
+                ? `Rimandato all'operaio: ${c.motivoRifiuto}`
+                : `Inviato il ${formattaData(c.compilatoIl)}, in attesa di validazione.`}
+          </p>
+        </div>
+      )}
+
+      <div className="card sezione" id="economia">
+        <span className="job-list-label">Parte economica</span>
+        <EconomiaLavoro
+          lavoro={lavoro}
+          fatture={fatture}
+          pagamenti={pagamenti}
+          costoOrario={costoOrario}
+          onCambiato={ricaricaSoldi}
+          onAggiornaLavoro={aggiorna}
+        />
+      </div>
 
       {dialogo}
     </>

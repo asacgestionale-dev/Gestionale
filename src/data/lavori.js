@@ -25,6 +25,8 @@ function daDb(l) {
     colore: l.colore || 'blu',
     creatoIl: l.creato_il,
     validatoIl: l.validato_il,
+    // materiali e altre spese: la manodopera si calcola dal rapportino
+    costi: l.costi || {},
   }
 }
 
@@ -47,6 +49,7 @@ function versoDb(l) {
   if ('assegnato' in l) m.assegnato = l.assegnato
   if ('colore' in l) m.colore = l.colore
   if ('validatoIl' in l) m.validato_il = l.validatoIl
+  if ('costi' in l) m.costi = l.costi
   return m
 }
 

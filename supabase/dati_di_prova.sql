@@ -1,5 +1,6 @@
 -- ---------------------------------------------------------------
--- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI, 10 clienti, 10 lavori
+-- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI, 10 clienti, 10 lavori,
+-- 10 materiali, fatture e incassi
 -- Da eseguire nel SQL Editor di Supabase. Si può rilanciare: non crea
 -- doppioni. Tutti i record hanno la nota "Dati di prova": in fondo al
 -- file c'è la query per toglierli.
@@ -198,19 +199,97 @@ where not exists (
   select 1 from lavori l where l.titolo = v.titolo and l.note like '%Dati di prova%'
 );
 
--- Pagamenti dei lavori di prova: un acconto sul capannone, acconto e saldo
--- sulla pavimentazione chiusa (così Gestione Economica mostra i tre stati)
-insert into pagamenti (lavoro_id, tipo, importo, data, modalita, note)
-select l.id, v.tipo, v.importo, current_date + v.giorni, v.modalita, 'Dati di prova'
+-- ---------------- fatture, incassi e costi dei lavori di prova ----------------
+-- Servono le tabelle di flusso_e_fatture.sql: se mancano le creo qui.
+create table if not exists fatture (
+  id uuid primary key default gen_random_uuid(),
+  lavoro_id uuid not null references lavori on delete cascade,
+  numero text not null default '',
+  data date not null default current_date,
+  tipo text not null default 'Saldo',
+  imponibile numeric not null default 0,
+  iva numeric not null default 22,
+  scadenza date,
+  note text default '',
+  creato_il timestamptz default now()
+);
+alter table fatture enable row level security;
+drop policy if exists "accesso approvato" on fatture;
+create policy "accesso approvato" on fatture
+  for all using (e_approvato()) with check (e_approvato());
+alter table pagamenti add column if not exists fattura_id uuid references fatture on delete set null;
+alter table lavori add column if not exists costi jsonb not null default '{}'::jsonb;
+
+-- Quattro fatture:
+--   pavimentazione (chiusa): acconto e saldo, tutti e due pagati -> Incassato
+--   capannone: acconto pagato prima di iniziare
+--   terrazzo del condominio: acconto al 30% NON pagato e già scaduto -> in rosso
+insert into fatture (lavoro_id, numero, data, tipo, imponibile, iva, scadenza, note)
+select l.id, to_char(current_date, 'YYYY') || '/' || v.progressivo, current_date + v.giorni,
+       v.tipo, v.imponibile, v.iva, current_date + v.scade, 'Dati di prova'
 from (values
-  ('Riparazione copertura capannone',          'Acconto', 2000, -10, 'Bonifico'),
-  ('Rifacimento pavimentazione area lavaggio', 'Acconto', 2000, -18, 'Bonifico'),
-  ('Rifacimento pavimentazione area lavaggio', 'Saldo',   3400,  -3, 'Bonifico')
-) as v(titolo, tipo, importo, giorni, modalita)
+  ('Rifacimento pavimentazione area lavaggio',  '001', 'Acconto', 2000, 22, -25,   5),
+  ('Rifacimento pavimentazione area lavaggio',  '002', 'Saldo',   3400, 22,  -4,  26),
+  ('Riparazione copertura capannone',           '003', 'Acconto', 2000, 22, -12,  18),
+  ('Rifacimento impermeabilizzazione terrazzo', '004', 'Acconto', 1440, 10, -40, -10)
+) as v(titolo, progressivo, tipo, imponibile, iva, giorni, scade)
 join lavori l on l.titolo = v.titolo and l.note like '%Dati di prova%'
 where not exists (
-  select 1 from pagamenti p where p.lavoro_id = l.id and p.tipo = v.tipo and p.note = 'Dati di prova'
+  select 1 from fatture f where f.lavoro_id = l.id and f.tipo = v.tipo and f.note = 'Dati di prova'
 );
+
+-- Gli incassi di prova si rifanno da capo, collegati alle loro fatture
+-- (l'importo comprende l'IVA, come i soldi che arrivano davvero)
+delete from pagamenti where note = 'Dati di prova';
+
+insert into pagamenti (lavoro_id, fattura_id, tipo, importo, data, modalita, note)
+select f.lavoro_id, f.id, f.tipo, round(f.imponibile * (1 + f.iva / 100), 2),
+       current_date + v.giorni, 'Bonifico', 'Dati di prova'
+from (values ('001', -20), ('002', -2), ('003', -8)) as v(progressivo, giorni)
+join fatture f on f.numero = to_char(current_date, 'YYYY') || '/' || v.progressivo
+              and f.note = 'Dati di prova';
+
+-- Costi dei materiali, per vedere il margine dei lavori eseguiti
+update lavori set costi = '{"materiali": 1350, "altri": 150}'::jsonb
+where titolo = 'Rifacimento pavimentazione area lavaggio' and note like '%Dati di prova%';
+
+update lavori set costi = '{"materiali": 620}'::jsonb
+where titolo = 'Sostituzione plafoniere aule con LED' and note like '%Dati di prova%';
+
+-- ---------------- 10 materiali ----------------
+-- Tre sono volutamente sotto la scorta minima, per vederli in rosso.
+create table if not exists materiali (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null,
+  categoria text default '',
+  unita text default 'pz',
+  prezzo numeric default 0,
+  scorta numeric default 0,
+  scorta_minima numeric default 0,
+  fornitore text default '',
+  note text default '',
+  creato_il timestamptz default now()
+);
+alter table materiali enable row level security;
+drop policy if exists "accesso approvato" on materiali;
+create policy "accesso approvato" on materiali
+  for all using (e_approvato()) with check (e_approvato());
+
+insert into materiali (nome, categoria, unita, prezzo, scorta, scorta_minima, fornitore, note)
+select v.nome, v.categoria, v.unita, v.prezzo, v.scorta, v.minima, v.fornitore, 'Dati di prova'
+from (values
+  ('Guaina ardesiata 4 mm',            'Impermeabilizzazione', 'rotolo', 58.00,  12,   5, 'Fornitore edile'),
+  ('Primer bituminoso 20 l',           'Impermeabilizzazione', 'conf.',  64.00,   3,   4, 'Fornitore edile'),
+  ('Cemento Portland 25 kg',           'Edile',                'sacco',   7.50,  40,  20, 'Fornitore edile'),
+  ('Resina epossidica per pavimenti',  'Edile',                'kg',     18.00,  25,  10, 'Fornitore edile'),
+  ('Cavo FS17 1,5 mm²',                'Elettrico',            'm',       0.45, 300, 200, 'Fornitore elettrico'),
+  ('Plafoniera LED 60x60',             'Elettrico',            'pz',     32.00,   6,  10, 'Fornitore elettrico'),
+  ('Interruttore differenziale 30 mA', 'Elettrico',            'pz',     38.00,   8,   4, 'Fornitore elettrico'),
+  ('Sifone per piatto doccia',         'Idraulico',            'pz',     14.00,   5,   3, 'Fornitore idraulico'),
+  ('Silicone sanitario',               'Idraulico',            'pz',      6.20,  18,  10, 'Fornitore idraulico'),
+  ('Idropittura lavabile 14 l',        'Vernici',              'conf.',  49.00,   2,   4, 'Colorificio')
+) as v(nome, categoria, unita, prezzo, scorta, minima, fornitore)
+where not exists (select 1 from materiali m where lower(m.nome) = lower(v.nome));
 
 -- Controllo: quanti record di prova ci sono adesso
 select 'dipendenti' as tabella, count(*) from dipendenti where note like 'Dati di prova%'
@@ -218,11 +297,14 @@ union all select 'mezzi', count(*) from mezzi where note like 'Dati di prova%'
 union all select 'dpi', count(*) from dpi where note like 'Dati di prova%'
 union all select 'clienti', count(*) from clienti where note like 'Dati di prova%'
 union all select 'lavori', count(*) from lavori where note like '%Dati di prova%'
-union all select 'pagamenti', count(*) from pagamenti where note = 'Dati di prova';
+union all select 'pagamenti', count(*) from pagamenti where note = 'Dati di prova'
+union all select 'fatture', count(*) from fatture where note = 'Dati di prova'
+union all select 'materiali', count(*) from materiali where note like 'Dati di prova%';
 
 -- ---------------------------------------------------------------
 -- Per TOGLIERE i dati di prova (eseguire solo quando non servono più):
---   delete from lavori     where note like '%Dati di prova%';  -- toglie anche i loro pagamenti
+--   delete from lavori     where note like '%Dati di prova%';  -- toglie anche fatture e pagamenti
+--   delete from materiali  where note like 'Dati di prova%';
 --   delete from mezzi      where note like 'Dati di prova%';
 --   delete from dipendenti where note like 'Dati di prova%';
 --   delete from dpi        where note like 'Dati di prova%';

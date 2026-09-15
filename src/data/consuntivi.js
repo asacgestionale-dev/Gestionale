@@ -2,7 +2,8 @@
 // il responsabile lo verifica e chiude il lavoro.
 
 export const STATI_CONSUNTIVO = {
-  DA_CONSUNTIVARE: 'Da consuntivare',
+  // stessi nomi usati per le fasi del lavoro in tutto il gestionale
+  DA_CONSUNTIVARE: 'Manca rapportino',
   DA_VALIDARE: 'Da validare',
   DA_CORREGGERE: 'Da correggere',
   CHIUSO: 'Chiuso',

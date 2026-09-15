@@ -13,7 +13,7 @@ import Personale from './pages/Personale'
 import SchedaDipendente from './pages/SchedaDipendente'
 import AssegnazioneLavori from './pages/AssegnazioneLavori'
 import NuovoLavoro from './pages/NuovoLavoro'
-import ArchivioLavori from './pages/ArchivioLavori'
+import Lavori from './pages/Lavori'
 import Consuntivazione from './pages/Consuntivazione'
 import Economico from './pages/Economico'
 import SchedaLavoro from './pages/SchedaLavoro'
@@ -56,7 +56,7 @@ function Ufficio() {
         <Route path="nuovo-lavoro" element={<NuovoLavoro />} />
         <Route path="consuntivazione" element={<Consuntivazione />} />
         <Route path="economico" element={<Economico />} />
-        <Route path="lavori" element={<ArchivioLavori />} />
+        <Route path="lavori" element={<Lavori />} />
         <Route path="lavori/:id" element={<SchedaLavoro />} />
         <Route path="assegnazione-lavori" element={<AssegnazioneLavori />} />
         <Route path="presenze" element={<Presenze utente={utente} />} />

@@ -1,0 +1,278 @@
+/* Tabellone dei lavori e percorso nella scheda del lavoro */
+
+a.db-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.vista-scelta {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.vista-scelta button {
+  border: none;
+  background: var(--bg-content);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.vista-scelta button + button {
+  border-left: 1px solid var(--border);
+}
+
+.vista-scelta button.scelto {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---- tabellone ---- */
+
+.tabellone {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(200px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.tab-colonna {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 180px;
+}
+
+.tab-colonna.tab-soldi {
+  background: var(--accent-soft);
+}
+
+.tab-testa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-titolo {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-h);
+}
+
+.tab-conta {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  color: var(--text-muted);
+}
+
+.tab-totale {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.tab-carte {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tab-vuota {
+  color: var(--text-muted);
+  text-align: center;
+  margin: 12px 0;
+}
+
+.tab-carta {
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--bg-content);
+  border-radius: 10px;
+  padding: 10px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.tab-carta:hover {
+  border-color: var(--accent-2);
+  transform: translateY(-1px);
+}
+
+.tab-carta-titolo {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-h);
+  line-height: 1.3;
+}
+
+.tab-carta-cliente,
+.tab-carta-riga {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tab-carta-piede {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex-wrap: wrap;
+}
+
+.tab-etichetta {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.tab-etichetta.tab-avviso {
+  background: #f8e4e0;
+  color: #b0503b;
+}
+
+/* ---- percorso nella scheda del lavoro ---- */
+
+.percorso-card {
+  margin-bottom: 18px;
+}
+
+.percorso {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.passo {
+  flex: 1;
+  min-width: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  position: relative;
+}
+
+.passo:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 18px);
+  width: calc(100% - 30px);
+  height: 2px;
+  background: var(--border);
+}
+
+.passo-fatto:not(:last-child)::after {
+  background: var(--accent-2);
+}
+
+.passo-pallino {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  background: var(--bg-content);
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+}
+
+.passo-fatto .passo-pallino {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: #fff;
+}
+
+.passo-attuale .passo-pallino {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.passo-nome {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.passo-attuale .passo-nome {
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+.percorso-azione {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.rapportino-griglia {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 22px;
+  margin: 12px 0;
+}
+
+.rapportino-griglia > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+@media (max-width: 900px) {
+  .tabellone {
+    grid-template-columns: repeat(7, minmax(230px, 78vw));
+  }
+}

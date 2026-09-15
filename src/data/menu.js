@@ -47,7 +47,7 @@ export const SEZIONI = [
       {
         to: '/materiali',
         titolo: 'Materiali',
-        desc: 'Magazzino e scorte',
+        desc: 'Magazzino, scorte e prezzi',
         icon: IconPackage,
       },
     ],
@@ -74,6 +74,12 @@ export const SEZIONI = [
         icon: IconPlus,
       },
       {
+        to: '/lavori',
+        titolo: 'Lavori',
+        desc: 'Tabellone: ogni lavoro nella sua fase',
+        icon: IconArchive,
+      },
+      {
         to: '/assegnazione-lavori',
         titolo: 'Assegnazione Lavori',
         desc: 'Pianifica e assegna',
@@ -91,12 +97,6 @@ export const SEZIONI = [
         desc: 'Acconti, SAL e stato dei pagamenti',
         icon: IconEuro,
       },
-      {
-        to: '/lavori',
-        titolo: 'Archivio Lavori',
-        desc: 'Tutti i lavori e le schede',
-        icon: IconArchive,
-      },
     ],
   },
 ]
@@ -112,6 +112,7 @@ const PREDEFINITI = [
   '/presenze',
   '/squadre',
   '/nuovo-lavoro',
+  '/lavori',
   '/assegnazione-lavori',
   '/consuntivazione',
   '/economico',

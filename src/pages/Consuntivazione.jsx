@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { caricaLavori, aggiornaLavoro, formattaEuro } from '../data/lavori'
 import { caricaClienti } from '../data/clienti'
 import { SQUADRE_BASE, oggiISO, caricaComposizione } from '../data/squadre'
@@ -32,7 +32,10 @@ export default function Consuntivazione() {
   const [lavori, setLavori] = useState([])
   const [clienti, setClienti] = useState([])
   const [composizioni, setComposizioni] = useState({})
-  const [apertoId, setApertoId] = useState(null)
+  // dalla scheda del lavoro si arriva qui con ?lavoro=<id>: il rapportino è già aperto
+  const [parametri] = useSearchParams()
+  const [apertoId, setApertoId] = useState(() => parametri.get('lavoro'))
+  const [chiusoOra, setChiusoOra] = useState(null)
   const [filtro, setFiltro] = useState('Aperti')
   const [materiale, setMateriale] = useState('')
   const [motivo, setMotivo] = useState('')
@@ -88,6 +91,7 @@ export default function Consuntivazione() {
       validatoIl: new Date().toISOString(),
     })
     setApertoId(null)
+    setChiusoOra(lavoro)
   }
 
   function rimandaIndietro(lavoro) {
@@ -141,6 +145,26 @@ export default function Consuntivazione() {
           <span className="stat-label">Chiusi</span>
         </div>
       </div>
+
+      {chiusoOra && (
+        <div
+          className="card sezione"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <span>
+            <strong>{chiusoOra.titolo}</strong> è chiuso: ora passa a <strong>Da fatturare</strong>.
+          </span>
+          <Link to={'/lavori/' + chiusoOra.id} className="vai-assegnazione">
+            Emetti la fattura →
+          </Link>
+        </div>
+      )}
 
       <div className="card sezione">
         <div className="lista-head">
@@ -223,7 +247,6 @@ export default function Consuntivazione() {
           const c = lavoro.consuntivo || consuntivoVuoto(lavoro, membri)
           const esiti = lavoro.consuntivo ? verificheConsuntivo(lavoro) : []
           const problemi = bloccanti(esiti)
-          const residuo = (lavoro.importo || 0) - (lavoro.incassato || 0)
 
           return (
             <div className="card sezione dettaglio-consuntivo">
@@ -250,7 +273,6 @@ export default function Consuntivazione() {
                     Materiali: {(lavoro.materiali || []).join(', ') || '—'}
                   </p>
                   <p className="confronto-riga">Importo: {formattaEuro(lavoro.importo)}</p>
-                  <p className="confronto-riga">Da incassare: {formattaEuro(residuo)}</p>
                 </div>
 
                 <div className="confronto-col">

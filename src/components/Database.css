@@ -1,0 +1,289 @@
+/* Stile comune delle pagine del Database e del flusso dei lavori */
+
+.db-testata {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.db-sottotitolo {
+  margin-bottom: 0;
+}
+
+.db-testata-azioni {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.db-btn {
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.db-btn:hover {
+  filter: brightness(1.06);
+}
+
+.db-btn-secondario {
+  background: var(--bg-content);
+  color: var(--accent-text);
+  border-color: var(--border);
+}
+
+.db-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---- riquadri di riepilogo ---- */
+
+.db-riepilogo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.db-tile {
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.db-tile-valore {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-h);
+  line-height: 1.15;
+}
+
+.db-tile-etichetta {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.db-tile-nota {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.db-tile-verde .db-tile-valore {
+  color: #4f7a4a;
+}
+
+.db-tile-ambra .db-tile-valore {
+  color: #b7791f;
+}
+
+.db-tile-rosso .db-tile-valore {
+  color: #b0503b;
+}
+
+/* ---- pannello "nuovo" ---- */
+
+.db-pannello {
+  margin-bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.db-pannello-titolo,
+.db-strumenti-titolo {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.db-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 14px;
+}
+
+.db-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.db-campo-largo {
+  grid-column: span 2;
+}
+
+.db-campo-etichetta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.db-campo input,
+.db-campo select,
+.db-campo textarea,
+.db-ricerca,
+.db-filtro {
+  height: 38px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+  width: 100%;
+}
+
+.db-campo textarea {
+  height: auto;
+  min-height: 70px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.db-campo input:focus,
+.db-campo select:focus,
+.db-campo textarea:focus,
+.db-ricerca:focus,
+.db-filtro:focus {
+  border-color: var(--accent-2);
+}
+
+.db-form-azioni {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---- barra sopra le tabelle ---- */
+
+.db-strumenti {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.db-strumenti-filtri {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.db-ricerca {
+  width: 240px;
+}
+
+.db-filtro {
+  width: auto;
+  min-width: 150px;
+}
+
+.db-vuoto {
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 18px 0 6px;
+  margin: 0;
+}
+
+/* righe cliccabili che aprono una scheda */
+.db-riga {
+  cursor: pointer;
+}
+
+.db-riga:hover td {
+  background: var(--accent-soft);
+}
+
+.db-riga-aperta td {
+  background: var(--accent-soft);
+}
+
+.db-dettaglio > td {
+  background: var(--bg);
+  padding: 16px !important;
+}
+
+.db-azioni-cella {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.db-rosso {
+  color: #b0503b;
+  font-weight: 700;
+}
+
+.db-ambra {
+  color: #b7791f;
+  font-weight: 700;
+}
+
+.db-verde {
+  color: #4f7a4a;
+  font-weight: 700;
+}
+
+.db-muto {
+  color: var(--text-muted);
+}
+
+.db-cella-input {
+  width: 90px;
+  height: 32px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (max-width: 900px) {
+  .db-ricerca {
+    width: 100%;
+  }
+
+  .db-strumenti-filtri {
+    width: 100%;
+  }
+
+  .db-filtro {
+    flex: 1;
+  }
+
+  .db-campo-largo {
+    grid-column: auto;
+  }
+
+  .db-tile-valore {
+    font-size: 22px;
+  }
+}
