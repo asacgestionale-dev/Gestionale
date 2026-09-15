@@ -1,5 +1,5 @@
 -- ---------------------------------------------------------------
--- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI
+-- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI, 10 clienti
 -- Da eseguire nel SQL Editor di Supabase. Si può rilanciare: non crea
 -- doppioni. Tutti i record hanno la nota "Dati di prova": in fondo al
 -- file c'è la query per toglierli.
@@ -83,14 +83,37 @@ from (values
 ) as v(nome, categoria, norma, durata_mesi)
 where not exists (select 1 from dpi d where lower(d.nome) = lower(v.nome));
 
+-- ---------------- 10 clienti ----------------
+-- La tabella clienti non aveva un campo note: lo aggiungo, così anche i
+-- clienti di prova si riconoscono e si tolgono. Il gestionale lo ignora.
+alter table clienti add column if not exists note text default '';
+
+insert into clienti (nome, indirizzo, referente, telefono, note)
+select v.nome, v.indirizzo, v.referente, v.telefono, 'Dati di prova'
+from (values
+  ('Condominio Parco dei Pini',         'Via Roma 45, Cisterna di Latina',               'Paolo Fabbri (amministratore)', '0773 000 101'),
+  ('Ristorante La Lanterna srl',        'Corso della Repubblica 120, Latina',            'Gino Esposito',                 '0773 000 102'),
+  ('Supermercato Freschezza srl',       'Via Nettunense 210, Aprilia',                   'Laura Sartori',                 '06 000 0103'),
+  ('Studio Medico Salus',               'Corso della Repubblica 15, Velletri',           'Dott.ssa Anna Mancini',         '06 000 0104'),
+  ('Famiglia Moretti',                  'Via Roma 12, Cori',                             'Roberto Moretti',               '333 000 0105'),
+  ('Azienda Agricola Il Casale',        'Via Monti Lepini 300, Sezze',                   'Stefano Leone',                 '0773 000 106'),
+  ('Hotel Riviera Blu',                 'Riviera Zanardelli 150, Anzio',                 'Chiara Villa',                  '06 000 0107'),
+  ('Scuola dell''infanzia Arcobaleno',  'Via Roma 8, Sermoneta',                         'Suor Maria Grazia',             '0773 000 108'),
+  ('Officina F.lli Rinaldi snc',        'Via Nettuno 90, Cisterna di Latina',            'Fabio Rinaldi',                 '06 000 0109'),
+  ('Palestra Energy Club',              'Via Isonzo 60, Latina',                         'Valentina Costa',               '0773 000 110')
+) as v(nome, indirizzo, referente, telefono)
+where not exists (select 1 from clienti c where lower(c.nome) = lower(v.nome));
+
 -- Controllo: quanti record di prova ci sono adesso
 select 'dipendenti' as tabella, count(*) from dipendenti where note like 'Dati di prova%'
 union all select 'mezzi', count(*) from mezzi where note like 'Dati di prova%'
-union all select 'dpi', count(*) from dpi where note like 'Dati di prova%';
+union all select 'dpi', count(*) from dpi where note like 'Dati di prova%'
+union all select 'clienti', count(*) from clienti where note like 'Dati di prova%';
 
 -- ---------------------------------------------------------------
 -- Per TOGLIERE i dati di prova (eseguire solo quando non servono più):
 --   delete from mezzi      where note like 'Dati di prova%';
 --   delete from dipendenti where note like 'Dati di prova%';
 --   delete from dpi        where note like 'Dati di prova%';
+--   delete from clienti    where note like 'Dati di prova%';
 -- ---------------------------------------------------------------
