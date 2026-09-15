@@ -101,8 +101,11 @@
 :root[data-tema='aziendale'] .task-tile,
 :root[data-tema='aziendale'] .job-form,
 :root[data-tema='aziendale'] .timeline-wrap,
-:root[data-tema='aziendale'] .squadra-card,
-:root[data-tema='aziendale'] .person-list,
+:root[data-tema='aziendale'] .squadra,
+:root[data-tema='aziendale'] .elenco-persone,
+:root[data-tema='aziendale'] .db-tile,
+:root[data-tema='aziendale'] .tab-colonna,
+:root[data-tema='aziendale'] .tab-carta,
 :root[data-tema='aziendale'] .job-list {
   border-radius: 3px;
 }

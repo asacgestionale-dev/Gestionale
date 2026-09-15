@@ -1,3 +1,4 @@
+/* barra della giornata: la usano anche Presenze e Assegnazione Lavori */
 .squadre-date-row {
   display: flex;
   align-items: center;
@@ -28,18 +29,39 @@
   border-color: var(--accent-2);
 }
 
+.giorno-barra {
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
+.giorno-nome {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-h);
+  text-transform: capitalize;
+}
+
+/* ---- disposizione: elenco a sinistra, squadre a destra ---- */
+
 .squadre-layout {
   display: flex;
-  gap: 24px;
+  gap: 20px;
   align-items: flex-start;
 }
 
 .squadre-side {
-  width: 240px;
+  width: 270px;
   flex-shrink: 0;
+  position: sticky;
+  top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.person-list {
+.elenco-persone {
   background: var(--bg-content);
   border: 1px dashed var(--border);
   border-radius: 14px;
@@ -48,9 +70,12 @@
   flex-direction: column;
   gap: 8px;
   min-height: 200px;
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.person-list-label {
+.elenco-titolo {
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -59,182 +84,340 @@
   margin-bottom: 2px;
 }
 
-.person-list-empty {
-  font-size: 12.5px;
+.elenco-titolo-assenti {
+  margin-top: 10px;
+  color: #b0503b;
+}
+
+.elenco-vuoto {
+  font-size: 13px;
   color: var(--text-muted);
   margin: 4px 0;
 }
 
-.person-chip {
-  padding: 9px 12px;
-  border-radius: 9px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: grab;
-  box-shadow: var(--shadow-sm);
-}
-
-.person-chip:active {
-  cursor: grabbing;
-}
-
-.person-chip-assente {
-  background: #f8e4e0;
-  color: #b0503b;
-}
-
-.person-chip-stato {
-  display: block;
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  opacity: 0.8;
-  margin-top: 2px;
-}
-
-@media (prefers-color-scheme: dark) {
-  .person-chip-assente,
-  .squadra-member-assente {
-    background: #3a2622;
-    color: #e0a08f;
-  }
-}
-
-.squadre-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 18px;
-}
-
-.squadra-card {
-  background: var(--bg-content);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 160px;
-  transition: border-color 0.15s ease;
-}
-
-.squadra-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.squadra-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-h);
-}
-
-.lucchetto {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  padding: 3px 7px;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.lucchetto:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent-2);
-}
-
-.lucchetto-chiuso {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.squadra-card-bloccata {
-  border-color: var(--accent);
-}
-
-.squadra-fissa-nota {
-  font-size: 10.5px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--accent-text);
-}
-
-.squadra-drop-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.squadra-empty {
-  font-size: 12px;
-  color: var(--text-muted);
+.squadre-suggerimento {
   margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
-.squadra-member {
+/* ---- persona: nell'elenco e dentro le squadre ---- */
+
+.persona {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--bg);
-  font-size: 12.5px;
-  font-weight: 600;
+  border: 1px solid transparent;
   cursor: grab;
+  user-select: none;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
-.squadra-member:active {
+.persona:hover {
+  border-color: var(--border);
+}
+
+.persona:active {
   cursor: grabbing;
 }
 
-.squadra-member-assente {
-  background: #f8e4e0;
-  color: #b0503b;
+.persona:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 1px;
 }
 
-.squadra-member-nome {
+.persona-selezionata {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.persona-testo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.persona-nome {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-h);
 }
 
-.squadra-member-preposto {
+.persona-sotto {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.persona-assente {
+  background: #f8e4e0;
+}
+
+.persona-assente .avatar {
+  background: #f1cfc6;
+  color: #b0503b;
+}
+
+.persona-assente .persona-nome,
+.persona-assente .persona-sotto {
+  color: #b0503b;
+}
+
+.persona-assente .persona-sotto {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  font-size: 10.5px;
+}
+
+.etichetta-preposto {
   font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
   background: var(--accent);
   color: #fff;
 }
 
-.squadra-member button {
+.persona-azioni {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.persona-azioni button {
+  width: 26px;
+  height: 26px;
   border: none;
+  border-radius: 7px;
   background: transparent;
-  color: inherit;
-  opacity: 0.6;
+  color: var(--text-muted);
   font-size: 15px;
   line-height: 1;
   cursor: pointer;
-  padding: 2px;
 }
 
-.squadra-member button:hover {
-  opacity: 1;
+.persona-azioni button:hover {
+  background: var(--bg-content);
+  color: var(--text-h);
+}
+
+/* ---- squadre ---- */
+
+.squadre-grid {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.squadra {
+  --tinta: var(--accent-soft);
+  background: var(--bg-content);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.squadra-tinta-0 {
+  --tinta: #e4eef7;
+}
+
+.squadra-tinta-1 {
+  --tinta: #e5f1e3;
+}
+
+.squadra-tinta-2 {
+  --tinta: #f7eedb;
+}
+
+.squadra-tinta-3 {
+  --tinta: #f6e4ea;
+}
+
+.squadra-tinta-4 {
+  --tinta: #ebe6f5;
+}
+
+.squadra-testa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--tinta);
+}
+
+.squadra-nome {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-h);
+}
+
+.squadra-conta {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.lucchetto {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-content);
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text);
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lucchetto:hover {
+  border-color: var(--accent-2);
+}
+
+.lucchetto-chiuso {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.squadra-bloccata {
+  border-color: var(--accent);
+}
+
+.squadra-lavori {
+  padding: 8px 14px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.squadra-lavori a {
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.squadra-lavori a:hover {
+  text-decoration: underline;
+}
+
+.squadra-avviso {
+  margin: 8px 14px 0;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: #f8e4e0;
+  color: #b0503b;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.squadra-membri {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+
+.squadra-vuota {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 80px;
+  margin: 0;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* una persona scelta al tocco: le squadre in cui può andare si evidenziano */
+.squadra-in-attesa {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: var(--accent-2);
+}
+
+.squadra-in-attesa:hover {
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* zona su cui si sta per lasciare una persona trascinata */
+.zona-attiva {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.elenco-persone.zona-attiva {
+  background: var(--accent-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  .persona-assente,
+  .squadra-avviso {
+    background: #3a2622;
+  }
+
+  .persona-assente .avatar {
+    background: #4a2e28;
+    color: #e0a08f;
+  }
+
+  .persona-assente .persona-nome,
+  .persona-assente .persona-sotto,
+  .squadra-avviso,
+  .elenco-titolo-assenti {
+    color: #e0a08f;
+  }
+
+  .squadra-tinta-0,
+  .squadra-tinta-1,
+  .squadra-tinta-2,
+  .squadra-tinta-3,
+  .squadra-tinta-4 {
+    --tinta: var(--accent-soft);
+  }
 }
 
 @media (max-width: 900px) {
@@ -245,11 +428,22 @@
 
   .squadre-side {
     width: 100%;
+    position: static;
+  }
+
+  .elenco-persone {
+    max-height: none;
+    min-height: 0;
   }
 
   .squadre-date-row {
     flex-wrap: wrap;
     gap: 8px;
     margin-bottom: 16px;
+  }
+
+  .giorno-nome {
+    margin-left: 0;
+    width: 100%;
   }
 }
