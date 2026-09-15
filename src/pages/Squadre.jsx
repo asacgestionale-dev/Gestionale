@@ -273,6 +273,8 @@ export default function Squadre() {
         azioni={[{ testo: 'Ricopia dal giorno prima', onClick: ricopiaGiornoPrima, secondaria: true }]}
       />
 
+      <Riepilogo voci={voci} />
+
       <div className="card squadre-date-row giorno-barra">
         <button
           type="button"
@@ -314,8 +316,6 @@ export default function Squadre() {
         </button>
         <span className="etichetta-giorno giorno-nome">{formattaGiorno(data, true)}</span>
       </div>
-
-      <Riepilogo voci={voci} />
 
       <div className="squadre-layout">
         <aside className="squadre-side">
