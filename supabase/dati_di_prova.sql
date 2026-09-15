@@ -1,5 +1,5 @@
 -- ---------------------------------------------------------------
--- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI, 10 clienti
+-- Dati di prova: 10 dipendenti, 10 mezzi, 10 DPI, 10 clienti, 10 lavori
 -- Da eseguire nel SQL Editor di Supabase. Si può rilanciare: non crea
 -- doppioni. Tutti i record hanno la nota "Dati di prova": in fondo al
 -- file c'è la query per toglierli.
@@ -104,14 +104,125 @@ from (values
 ) as v(nome, indirizzo, referente, telefono)
 where not exists (select 1 from clienti c where lower(c.nome) = lower(v.nome));
 
+-- ---------------- 10 lavori ----------------
+-- Uno per cliente di prova (servono i clienti qui sopra). Le date sono
+-- relative al giorno in cui si esegue lo script, così restano attuali:
+--   4 da assegnare
+--   3 assegnati per domani (Squadra 1 alle 8:00 e alle 11:30, Squadra 2 alle 9:00)
+--   1 con appuntamento fisso dopodomani alle 10:00 (Squadra 3)
+--   1 eseguito ieri con rapportino da validare (con segnalazioni: un'ora in
+--     più e un materiale non previsto)
+--   1 chiuso cinque giorni fa, validato e saldato
+-- La nota di ogni lavoro finisce con "· Dati di prova".
+insert into lavori (titolo, cliente_id, note, durata, materiali, indirizzo, importo, incassato,
+                    completato, chiuso, appuntamento, consuntivo, assegnato, colore, validato_il)
+select
+  v.titolo,
+  c.id,
+  v.note || ' · Dati di prova',
+  v.durata,
+  v.materiali::jsonb,
+  c.indirizzo,
+  v.importo,
+  v.incassato,
+  v.completato,
+  v.chiuso,
+  v.appuntamento,
+  case when v.consuntivo is null then null
+       else v.consuntivo::jsonb
+            || jsonb_build_object('compilatoIl', to_char(current_date + v.giorni, 'YYYY-MM-DD') || 'T16:30:00Z')
+  end,
+  case when v.giorni is null then null
+       else jsonb_build_object('teamId', v.squadra,
+                               'data', to_char(current_date + v.giorni, 'YYYY-MM-DD'),
+                               'minuti', v.minuti)
+  end,
+  v.colore,
+  case when v.chiuso then (current_date + v.giorni + 1) + time '09:00' else null end
+from (values
+  ('Condominio Parco dei Pini', 'Rifacimento impermeabilizzazione terrazzo',
+   'Rimuovere la vecchia guaina, stendere primer e doppia guaina ardesiata. Chiavi del lastrico dal portiere.',
+   6, '["Guaina ardesiata 4 mm", "Primer bituminoso", "Bocchettoni di scarico"]',
+   4800, 0, 'blu', null, null, null, false, false, false, null),
+
+  ('Ristorante La Lanterna srl', 'Sostituzione cappa di aspirazione cucina',
+   'Smontare la cappa esistente e montare il nuovo motore. Finire entro le 11, poi apre la cucina.',
+   4, '["Motore di aspirazione", "Canna fumaria inox 250 mm", "Staffe di fissaggio"]',
+   2200, 0, 'verde', 't2', 1, 540, false, false, false, null),
+
+  ('Supermercato Freschezza srl', 'Manutenzione impianto di climatizzazione',
+   'Pulizia dei filtri e controllo del gas sulle 4 macchine del reparto vendita.',
+   3, '["Filtri G4", "Gas R32", "Detergente per batterie"]',
+   950, 0, 'ambra', 't1', 1, 480, false, false, false, null),
+
+  ('Studio Medico Salus', 'Verifica e messa a norma quadro elettrico',
+   'Appuntamento concordato con la dottoressa: lo studio resta chiuso solo in quella fascia.',
+   2, '["Interruttore differenziale 30 mA", "Morsettiera"]',
+   680, 0, 'rosa', 't3', 2, 600, true, false, false, null),
+
+  ('Famiglia Moretti', 'Riparazione perdita in bagno',
+   'Perdita sotto il piatto doccia: verificare sifone e sigillature.',
+   2, '["Sifone per piatto doccia", "Silicone sanitario"]',
+   350, 0, 'viola', 't1', 1, 690, false, false, false, null),
+
+  ('Azienda Agricola Il Casale', 'Riparazione copertura capannone',
+   'Sostituire 6 pannelli danneggiati dalla grandine e rifare la lattoneria sul lato nord.',
+   6, '["Pannelli sandwich 40 mm", "Viti autofilettanti", "Lattoneria"]',
+   6500, 2000, 'blu', null, null, null, false, false, false, null),
+
+  ('Hotel Riviera Blu', 'Tinteggiatura corridoi primo piano',
+   'Lavorare un corridoio alla volta per non chiudere le camere. Colore bianco ghiaccio.',
+   6, '["Idropittura lavabile", "Nastro di carta", "Teli di protezione"]',
+   3200, 0, 'verde', null, null, null, false, false, false, null),
+
+  ('Scuola dell''infanzia Arcobaleno', 'Sostituzione plafoniere aule con LED',
+   'Sostituire le plafoniere delle tre aule al piano terra.',
+   4, '["Plafoniere LED 60x60", "Cavo FS17 1,5 mm"]',
+   1850, 0, 'rosa', 't2', -1, 480, false, true, false,
+   '{"oreEffettive": 5, "materialiUsati": ["Plafoniere LED 60x60", "Cavo FS17 1,5 mm", "Scatole di derivazione"], "noteOperaio": "Sostituite 12 plafoniere. Servite 3 scatole di derivazione non previste.", "compilatoDa": "Andrea Romano, Alessio Marino", "rifiutato": false, "motivoRifiuto": ""}'),
+
+  ('Officina F.lli Rinaldi snc', 'Rifacimento pavimentazione area lavaggio',
+   'Demolire il vecchio massetto, rifare le pendenze verso la canaletta e stendere la resina.',
+   6, '["Massetto", "Resina epossidica", "Canaletta di scolo"]',
+   5400, 5400, 'ambra', 't1', -5, 480, false, true, true,
+   '{"oreEffettive": 6, "materialiUsati": ["Massetto", "Resina epossidica", "Canaletta di scolo"], "noteOperaio": "Lavoro completato, resina stesa in due mani.", "compilatoDa": "Luca Ferrari, Francesco Ricci", "rifiutato": false, "motivoRifiuto": ""}'),
+
+  ('Palestra Energy Club', 'Nuovi punti luce sala pesi',
+   'Aggiungere 8 faretti e i relativi interruttori vicino all''ingresso.',
+   3, '["Faretti LED", "Tubo corrugato", "Interruttori"]',
+   1200, 0, 'viola', null, null, null, false, false, false, null)
+) as v(cliente, titolo, note, durata, materiali, importo, incassato, colore,
+       squadra, giorni, minuti, appuntamento, completato, chiuso, consuntivo)
+join clienti c on c.nome = v.cliente
+where not exists (
+  select 1 from lavori l where l.titolo = v.titolo and l.note like '%Dati di prova%'
+);
+
+-- Pagamenti dei lavori di prova: un acconto sul capannone, acconto e saldo
+-- sulla pavimentazione chiusa (così Gestione Economica mostra i tre stati)
+insert into pagamenti (lavoro_id, tipo, importo, data, modalita, note)
+select l.id, v.tipo, v.importo, current_date + v.giorni, v.modalita, 'Dati di prova'
+from (values
+  ('Riparazione copertura capannone',          'Acconto', 2000, -10, 'Bonifico'),
+  ('Rifacimento pavimentazione area lavaggio', 'Acconto', 2000, -18, 'Bonifico'),
+  ('Rifacimento pavimentazione area lavaggio', 'Saldo',   3400,  -3, 'Bonifico')
+) as v(titolo, tipo, importo, giorni, modalita)
+join lavori l on l.titolo = v.titolo and l.note like '%Dati di prova%'
+where not exists (
+  select 1 from pagamenti p where p.lavoro_id = l.id and p.tipo = v.tipo and p.note = 'Dati di prova'
+);
+
 -- Controllo: quanti record di prova ci sono adesso
 select 'dipendenti' as tabella, count(*) from dipendenti where note like 'Dati di prova%'
 union all select 'mezzi', count(*) from mezzi where note like 'Dati di prova%'
 union all select 'dpi', count(*) from dpi where note like 'Dati di prova%'
-union all select 'clienti', count(*) from clienti where note like 'Dati di prova%';
+union all select 'clienti', count(*) from clienti where note like 'Dati di prova%'
+union all select 'lavori', count(*) from lavori where note like '%Dati di prova%'
+union all select 'pagamenti', count(*) from pagamenti where note = 'Dati di prova';
 
 -- ---------------------------------------------------------------
 -- Per TOGLIERE i dati di prova (eseguire solo quando non servono più):
+--   delete from lavori     where note like '%Dati di prova%';  -- toglie anche i loro pagamenti
 --   delete from mezzi      where note like 'Dati di prova%';
 --   delete from dipendenti where note like 'Dati di prova%';
 --   delete from dpi        where note like 'Dati di prova%';
